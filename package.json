@@ -1,0 +1,10 @@
+{
+  "name": "THBlog",
+  "version": "1.0.0",
+  "private": false,
+  "description": "Bloggin",
+  "scripts": {
+    "deploy": "./lib/deploy.sh",
+    "start": "hugo server -t cactus"
+  }
+}

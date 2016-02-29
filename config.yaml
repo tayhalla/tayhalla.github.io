@@ -1,0 +1,11 @@
+---
+contentdir: "content"
+layoutdir: "layouts"
+publishdir: "public"
+indexes:
+  category: "categories"
+baseurl: "http://tayhalla.github.io/blog"
+title: "Taylor Halliday"
+canonifyurls: true
+theme: "Cactus"
+...
