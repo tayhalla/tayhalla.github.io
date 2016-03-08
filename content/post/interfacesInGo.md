@@ -1,6 +1,6 @@
 +++
 date = "2016-01-25"
-title = "Go N' Pointers"
+title = "Interfaces in Go"
 tags = [ "Development", "Go" ]
 +++
 

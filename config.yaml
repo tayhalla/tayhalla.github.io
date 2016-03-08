@@ -7,5 +7,4 @@ indexes:
 baseurl: "http://tayhalla.github.io/blog"
 title: "Taylor Halliday"
 canonifyurls: true
-theme: "Cactus"
 ...

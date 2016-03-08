@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Development on </title>
+    <link>http://localhost:1313/tags/development/</link>
+    <description>Recent content in Development on </description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 25 Feb 2016 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:1313/tags/development/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>CADisplayLink and Maps</title>
+      <link>http://localhost:1313/post/caDisplayLink/</link>
+      <pubDate>Thu, 25 Feb 2016 00:00:00 +0000</pubDate>
+      
+      <guid>http://localhost:1313/post/caDisplayLink/</guid>
+      <description>
+
+&lt;p&gt;Ever been in the position where you need to animate something on screen but the property is not covered by [UIView animateWith&amp;hellip;]? Or maybe the thing you&amp;rsquo;re trying to animate is not part of the standard UIKit frameworks, and is instead some higher level UI piece built by a vendor. I ran into this not too long ago with Google Maps iOS SDK. My desire was to animate a polyline across the sceen, but there was no built in animate feature for the SDK. This is how I learned about making your own animations with CADisplayLink. A bit of background first though&amp;hellip;&lt;/p&gt;
+
+&lt;h1 id=&#34;fun-with-google-maps:48e3a9cef42133d4e3a0accdf42773f4&#34;&gt;Fun With Google Maps&lt;/h1&gt;
+
+&lt;p&gt;In the GoogleMaps iOS SDK, you create a polyline by creating a &lt;code&gt;GMSPath&lt;/code&gt; object with your desired coordinates, providing that to a &lt;code&gt;GMSPolyline&lt;/code&gt; and feeding the polyline some info such as width, color, etc., then pass that off to the &lt;code&gt;GMSMapView&lt;/code&gt; you&amp;rsquo;re using to display the map. Once you provide the path object to your mapview, the polyline is drawn on screen.&lt;/p&gt;
+
+&lt;p&gt;Right off the bat, my though was that this polyline was simply another view, or most likely something backed by a &lt;code&gt;CAShapeLayer&lt;/code&gt;, but the path object and the map didn&amp;rsquo;t provide a reference to any underlying cocoa views or layers. I tried &amp;lsquo;fishing&amp;rsquo; for a reference to the view via &lt;code&gt;recursiveDescription&lt;/code&gt; and digging through subviews, but quickly realized that the polyline I was seeing was not a separate view, but something rendered directly onto a OpenGL view. GoogleMaps, Apple Maps, and most recently MapBox all provide thier map views as &lt;code&gt;GLViews&lt;/code&gt;. This pretty much killed the idea of finding a &lt;code&gt;UIView&lt;/code&gt; or &lt;code&gt;CALayer&lt;/code&gt; reference and animating it.&lt;/p&gt;
+
+&lt;h1 id=&#34;gmspath:48e3a9cef42133d4e3a0accdf42773f4&#34;&gt;GMSPath&lt;/h1&gt;
+
+&lt;p&gt;Once I gave up trying to animate the view&amp;rsquo;s appearance directly, I took a look back at the underling datasource and wondered what would happen if I changed the &lt;code&gt;GMSPath&lt;/code&gt; after I passed it to the mapview.&lt;/p&gt;
+
+&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;[self.mapView&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;setCamera:[GMSCameraPosition&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;cameraWithLatitude:&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;47.6094426&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;longitude:&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;122.3319217&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;zoom:&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;12.0&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;]];&lt;/span&gt;
+
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;GMSMutablePath&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;mutablePath&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;[[GMSMutablePath&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;alloc]&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;init];&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;[mutablePath&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;addLatitude:&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;47.626452&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;longitude:&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;122.32&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;];&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;[mutablePath&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;addLatitude:&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;47.626452&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;longitude:&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;122.29&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;];&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;[mutablePath&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;addLatitude:&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;47.6&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;longitude:&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;122.29&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;];&lt;/span&gt;
+
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;GMSPolyline&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;polyline&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;[[GMSPolyline&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;alloc]&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;init];&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;[polyline&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;setPath:mutablePath];&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;[polyline&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;setStrokeWidth:&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;7.0&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;];&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;[polyline&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;setStrokeColor:[UIColor&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;redColor]];&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;[polyline&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;setMap:self.mapView];&lt;/span&gt;
+
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;dispatch_after(dispatch_time(DISPATCH_TIME_NOW,&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;int64_t&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)(&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;1.0&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;*&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;NSEC_PER_SEC)),&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;dispatch_get_main_queue(),&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;^&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+    &lt;span style=&#34;color: #f8f8f2&#34;&gt;[mutablePath&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;addLatitude:&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;47.6&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;longitude:&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;122.32&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;];&lt;/span&gt;
+    &lt;span style=&#34;color: #f8f8f2&#34;&gt;[mutablePath&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;addLatitude:&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;47.626452&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;longitude:&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;122.32&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;];&lt;/span&gt;
+    &lt;span style=&#34;color: #f8f8f2&#34;&gt;[polyline&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;setPath:mutablePath];&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;});&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+
+&lt;figure class=&#34;map-img&#34;&gt;
+    
+        &lt;img src=&#34;http://localhost:1313/media/polyline_complete.gif&#34; /&gt;
+    
+    
+&lt;/figure&gt;
+
+
+&lt;p&gt;Boom!&lt;/p&gt;
+
+&lt;h1 id=&#34;nstimer:48e3a9cef42133d4e3a0accdf42773f4&#34;&gt;NSTimer?&lt;/h1&gt;
+
+&lt;p&gt;What I needed was a way to interpolate though my coordinates, and have the callback progressively update the polyline. My first thought was &lt;code&gt;NSTimer&lt;/code&gt; would be a good candidate, but I was wrong. NSTimer simply wasn&amp;rsquo;t performing its callbacks fast enough, no matter how small I made the intervals. Looking into the documentation reveals why:&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;A timer is not a real-time mechanism; it fires only when one of the run loop modes to which the timer has been added is running and able to check if the timer’s firing time has passed. Because of the various input sources a typical run loop manages, the effective resolution of the time interval for a timer is limited to on the order of 50-100 milliseconds.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;What I&amp;rsquo;m looking to do is smoothly animate something, so a mechanism that only fires 10-20 times a second is clearly not my solution. What I need is something that will refresh at least as fast as the window redraws.&lt;/p&gt;
+
+&lt;h1 id=&#34;cadisplaylink:48e3a9cef42133d4e3a0accdf42773f4&#34;&gt;CADisplayLink&lt;/h1&gt;
+
+&lt;p&gt;What is CADisplayLink? It&amp;rsquo;s a callback mechanism that hooks right into the screen&amp;rsquo;s refresh callbacks. From the docs:&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;A CADisplayLink object is a timer object that allows your application to synchronize its drawing to the refresh rate of the display. Your application creates a new display link, providing a target object and a selector to be called when the screen is updated&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Sounds like just what we need. The API for &lt;code&gt;CADisplayLink&lt;/code&gt; is pretty similiar to NSTimer. You alloc/init an instance, assign is to a runloop, give it a target and selector, and you have a callback that occurs whenever a redraw is about to happen on the screen.&lt;/p&gt;
+
+&lt;p&gt;Here&amp;rsquo;s the code:&lt;/p&gt;
+
+&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;-&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;void&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;setupTimer&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+    &lt;span style=&#34;color: #f8f8f2&#34;&gt;self.displayLink&lt;/span&gt;               &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;[CADisplayLink&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;displayLinkWithTarget:self&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;selector:&lt;/span&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;@selector&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(updateRoutePolyline)];&lt;/span&gt;
+    &lt;span style=&#34;color: #f8f8f2&#34;&gt;[self.displayLink&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;addToRunLoop:[NSRunLoop&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;mainRunLoop]&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;forMode:NSRunLoopCommonModes];&lt;/span&gt;
+    &lt;span style=&#34;color: #f8f8f2&#34;&gt;self.displayLink.frameInterval&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;2.0&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;;&lt;/span&gt;
+    &lt;span style=&#34;color: #f8f8f2&#34;&gt;self.animationBeginTime&lt;/span&gt;        &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;;&lt;/span&gt;
+    &lt;span style=&#34;color: #f8f8f2&#34;&gt;self.animationCurrentFrameTime&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;;&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;-&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;void&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;updateRoutePolyline&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+    &lt;span style=&#34;color: #75715e&#34;&gt;// Setting up our base times for the relative time tracking&lt;/span&gt;
+    &lt;span style=&#34;color: #66d9ef&#34;&gt;double&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;duration&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;;&lt;/span&gt;
+    &lt;span style=&#34;color: #66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;(self.animationCurrentFrameTime&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;==&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+        &lt;span style=&#34;color: #f8f8f2&#34;&gt;self.animationBeginTime&lt;/span&gt;        &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;[self.displayLink&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;timestamp];&lt;/span&gt;
+        &lt;span style=&#34;color: #f8f8f2&#34;&gt;self.animationCurrentFrameTime&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;[self.displayLink&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;timestamp];&lt;/span&gt;
+    &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;else&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+        &lt;span style=&#34;color: #66d9ef&#34;&gt;double&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;nowTime&lt;/span&gt;                 &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;[self.displayLink&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;timestamp];&lt;/span&gt;
+        &lt;span style=&#34;color: #f8f8f2&#34;&gt;self.animationCurrentFrameTime&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;nowTime;&lt;/span&gt;
+        &lt;span style=&#34;color: #f8f8f2&#34;&gt;duration&lt;/span&gt;                       &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;nowTime&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;-&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;self.animationBeginTime;&lt;/span&gt;
+    &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+    &lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;
+    &lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;
+    &lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;And the result? A smooth animation across the screen for my polylines:&lt;/p&gt;
+
+
+&lt;figure class=&#34;map-img&#34;&gt;
+    
+        &lt;img src=&#34;http://localhost:1313/media/cadisplay_polyline.gif&#34; /&gt;
+    
+    
+&lt;/figure&gt;
+
+
+&lt;h1 id=&#34;pop-and-other-animation-frameworks:48e3a9cef42133d4e3a0accdf42773f4&#34;&gt;POP and Other Animation Frameworks&lt;/h1&gt;
+
+&lt;p&gt;CADisplayLink is actually the key to any animation framework. An animation on the screen is simply displaying the interpolation of values over the screen. The only thing that makes POP and other animations a bit more complicated is the concept of timing curves - the of the change in animateable values over the change in time. With the &lt;code&gt;[UIView animate...]&lt;/code&gt; functions, you may recegnize them as the &lt;code&gt;UIViewAnimationCurve&lt;/code&gt; enum. They define whether the animaiton will proceed in a linear fashion, or if it will speed up and/or slow down at certain points in the process.&lt;/p&gt;
+
+&lt;p&gt;For instance though, if you look at POP&amp;rsquo;s root animtor class, you will find it &lt;a href=&#34;https://github.com/facebook/pop/blob/master/pop/POPAnimator.mm#L347&#34;&gt;hooking up a CADiaplyLink in the init&lt;/a&gt;, and it&amp;rsquo;s callback is the &lt;a href=&#34;https://github.com/facebook/pop/blob/master/pop/POPAnimator.mm#L425&#34;&gt;core render method in the animation&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h1 id=&#34;a-note-on-interpolation:48e3a9cef42133d4e3a0accdf42773f4&#34;&gt;A Note On Interpolation&lt;/h1&gt;
+
+&lt;p&gt;In the previous section on animating a polyline, I oversimplified the process a bit. While you can simply interpolate between lat/lng pairs relative to the total distance in polyline, you need to be sure you&amp;rsquo;re hitting all of the original points provided to the polyline. This means that whenever you receive a callback to come up with a new point to put on screen, you need to check to make sure that all of the original control points (ends/beginings of the lines) were laid out where they needed to be. In order to do that, we need to preprocess the line to figure out each control pairs&amp;rsquo; position in our longer collection of interpolated points. Here is the code to preprocess the interpolation:&lt;/p&gt;
+
+&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #75715e&#34;&gt;// *** Create the polyline route ***&lt;/span&gt;
+&lt;span style=&#34;color: #66d9ef&#34;&gt;unsigned&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;int&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;polylineCount&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;int&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)self.locations.count;&lt;/span&gt;
+&lt;span style=&#34;color: #66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;(polylineCount&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;==&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+    &lt;span style=&#34;color: #66d9ef&#34;&gt;return&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;;&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+
+&lt;span style=&#34;color: #75715e&#34;&gt;// Get total distance and record segments&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;CLLocationDistance&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;totalDistance&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;0.0&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;;&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;NSMutableArray&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;routeLegDistances&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;[[NSMutableArray&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;alloc]&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;init];&lt;/span&gt;
+
+&lt;span style=&#34;color: #75715e&#34;&gt;// Calculate the total distance in order to get prorata distance legs&lt;/span&gt;
+&lt;span style=&#34;color: #66d9ef&#34;&gt;double&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;distances&lt;/span&gt;               &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;malloc(&lt;/span&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;sizeof&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(CLLocationDistance)&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;*&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;polylineCount);&lt;/span&gt;
+
+&lt;span style=&#34;color: #75715e&#34;&gt;// We use these to track the waypoint progress and indexes&lt;/span&gt;
+&lt;span style=&#34;color: #66d9ef&#34;&gt;int&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;allocCount&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;polylineCount&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;*&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;2.0&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;;&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;self.wayPointIndexTracker&lt;/span&gt;       &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;malloc(&lt;/span&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;sizeof&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;int&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;*&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;allocCount);&lt;/span&gt;
+&lt;span style=&#34;color: #66d9ef&#34;&gt;for&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;int&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;i&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;i&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;&amp;lt;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;allocCount;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;i&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;++&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+    &lt;span style=&#34;color: #f8f8f2&#34;&gt;self.wayPointIndexTracker[i]&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;INT16_MAX;&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;self.wayPointIndexTrackerBegRef&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;self.wayPointIndexTracker;&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;self.waypointMappingCount&lt;/span&gt;       &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;;&lt;/span&gt;
+
+&lt;span style=&#34;color: #75715e&#34;&gt;// Getting the distances between waypoints so that we can&lt;/span&gt;
+&lt;span style=&#34;color: #75715e&#34;&gt;// get relative length spans for each ray&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;CLLocation&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;previousLoc;&lt;/span&gt;
+&lt;span style=&#34;color: #66d9ef&#34;&gt;for&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;int&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;i&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;i&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;&amp;lt;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;polylineCount;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;i&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;++&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+    &lt;span style=&#34;color: #f8f8f2&#34;&gt;CLLocation&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;location&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;self.locations[i];&lt;/span&gt;
+    &lt;span style=&#34;color: #66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;(i&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;==&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+        &lt;span style=&#34;color: #f8f8f2&#34;&gt;previousLoc&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;location;&lt;/span&gt;
+        &lt;span style=&#34;color: #f8f8f2&#34;&gt;distances[i]&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;0.0&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;;&lt;/span&gt;
+        &lt;span style=&#34;color: #f8f8f2&#34;&gt;[routeLegDistances&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;addObject:[NSNumber&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;numberWithInt:&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;]];&lt;/span&gt;
+    &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;else&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+        &lt;span style=&#34;color: #f8f8f2&#34;&gt;distances[i]&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;[previousLoc&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;distanceFromLocation:location];&lt;/span&gt;
+        &lt;span style=&#34;color: #f8f8f2&#34;&gt;totalDistance&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;+=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;distances[i];&lt;/span&gt;
+    &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+    &lt;span style=&#34;color: #f8f8f2&#34;&gt;previousLoc&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;location;&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+
+&lt;span style=&#34;color: #75715e&#34;&gt;// Create fake intermediate points&lt;/span&gt;
+&lt;span style=&#34;color: #66d9ef&#34;&gt;int&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;totalDesiredPoints&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;5000&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;;&lt;/span&gt;
+
+&lt;span style=&#34;color: #75715e&#34;&gt;// Adding a 100 mark buffer. Shouldn&amp;#39;t ever go over the limit anyways, but doesn&amp;#39;t take much room.&lt;/span&gt;
+&lt;span style=&#34;color: #66d9ef&#34;&gt;int&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;waypointRunner&lt;/span&gt;                          &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;self.wayPointIndexTracker;&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;CLLocationCoordinate2D&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;finalCoordinateArray&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;malloc(&lt;/span&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;sizeof&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(CLLocationCoordinate2D)&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;*&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;(totalDesiredPoints&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;+&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;500&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;));&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;CLLocationCoordinate2D&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;coordinateRunner&lt;/span&gt;     &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;finalCoordinateArray;&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;CLLocationCoordinate2D&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;previousCoordinate;&lt;/span&gt;
+&lt;span style=&#34;color: #66d9ef&#34;&gt;unsigned&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;int&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;coordinateCount&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;;&lt;/span&gt;
+&lt;span style=&#34;color: #66d9ef&#34;&gt;for&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;int&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;x&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;x&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;&amp;lt;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;polylineCount;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;x&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;++&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+    &lt;span style=&#34;color: #75715e&#34;&gt;// Add the first coord&lt;/span&gt;
+    &lt;span style=&#34;color: #f8f8f2&#34;&gt;CLLocation&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;loc&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;self.locations[x];&lt;/span&gt;
+    &lt;span style=&#34;color: #f8f8f2&#34;&gt;CLLocationCoordinate2D&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;currentCoord&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;loc.coordinate;&lt;/span&gt;
+    &lt;span style=&#34;color: #66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;(x&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+        
+        &lt;span style=&#34;color: #75715e&#34;&gt;// We figure out the relative distance here between the current and the&lt;/span&gt;
+        &lt;span style=&#34;color: #75715e&#34;&gt;// previous. Then use that to approximate how many interpolated points&lt;/span&gt;
+        &lt;span style=&#34;color: #75715e&#34;&gt;// we need.&lt;/span&gt;
+        &lt;span style=&#34;color: #66d9ef&#34;&gt;double&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;legDistance&lt;/span&gt;                  &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;distances[x];&lt;/span&gt;
+        &lt;span style=&#34;color: #66d9ef&#34;&gt;double&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;relativeDistance&lt;/span&gt;             &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;legDistance&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;/&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;totalDistance;&lt;/span&gt;
+        &lt;span style=&#34;color: #66d9ef&#34;&gt;int&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;coordinateInsertCount&lt;/span&gt;           &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;relativeDistance&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;*&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;totalDesiredPoints;&lt;/span&gt;
+        &lt;span style=&#34;color: #66d9ef&#34;&gt;for&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;int&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;i&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;i&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;&amp;lt;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;coordinateInsertCount;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;i&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;++&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+            &lt;span style=&#34;color: #75715e&#34;&gt;// Calculate the incremental coordinate diff and add to the current coord&lt;/span&gt;
+            &lt;span style=&#34;color: #66d9ef&#34;&gt;double&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;newCoordinateVariance&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;float&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)i&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;/&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;coordinateInsertCount;&lt;/span&gt;
+            &lt;span style=&#34;color: #66d9ef&#34;&gt;double&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;addedLatVariance&lt;/span&gt;      &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;(currentCoord.latitude&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;-&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;previousCoordinate.latitude)&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;*&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;newCoordinateVariance;&lt;/span&gt;
+            &lt;span style=&#34;color: #66d9ef&#34;&gt;double&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;addedLngVariance&lt;/span&gt;      &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;(currentCoord.longitude&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;-&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;previousCoordinate.longitude)&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;*&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;newCoordinateVariance;&lt;/span&gt;
+            &lt;span style=&#34;color: #66d9ef&#34;&gt;double&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;newLat&lt;/span&gt;                &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;previousCoordinate.latitude&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;+&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;addedLatVariance;&lt;/span&gt;
+            &lt;span style=&#34;color: #66d9ef&#34;&gt;double&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;newLng&lt;/span&gt;                &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;previousCoordinate.longitude&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;+&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;addedLngVariance;&lt;/span&gt;
+            &lt;span style=&#34;color: #f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;coordinateRunner&lt;/span&gt;            &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;CLLocationCoordinate2DMake(newLat,&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;newLng);&lt;/span&gt;
+
+            &lt;span style=&#34;color: #75715e&#34;&gt;// If i == 0, we have a waypoint that we must hit&lt;/span&gt;
+            &lt;span style=&#34;color: #66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;(i&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;==&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+                &lt;span style=&#34;color: #f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;waypointRunner&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;++&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;coordinateCount;&lt;/span&gt;
+            &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+            
+            &lt;span style=&#34;color: #f8f8f2&#34;&gt;coordinateRunner&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;++&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;;&lt;/span&gt;
+            &lt;span style=&#34;color: #f8f8f2&#34;&gt;coordinateCount&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;++&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;;&lt;/span&gt;
+        &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+    &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+    &lt;span style=&#34;color: #f8f8f2&#34;&gt;previousCoordinate&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;currentCoord;&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;self.animationCoordinates&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;finalCoordinateArray;&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;self.animationCoordinateCount&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;coordinateCount;&lt;/span&gt;
+
+&lt;span style=&#34;color: #75715e&#34;&gt;// Don&amp;#39;t need these anymore&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;free(distances);&lt;/span&gt;
+
+&lt;span style=&#34;color: #66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;(self.animationCoordinateCount&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+    &lt;span style=&#34;color: #f8f8f2&#34;&gt;[self&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;drawRoutPolyline];&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+</description>
+    </item>
+    
+    <item>
+      <title>Interfaces in Go</title>
+      <link>http://localhost:1313/post/interfacesInGo/</link>
+      <pubDate>Mon, 25 Jan 2016 00:00:00 +0000</pubDate>
+      
+      <guid>http://localhost:1313/post/interfacesInGo/</guid>
+      <description>
+
+&lt;p&gt;Go has been a interesting language for me to learn. I love how the language reminds me of writing in C, but it comes with the comfort of having some hardened core libs and memory managemnt baked in. One thing that struck me as odd about it though was the concept of interfaces.&lt;/p&gt;
+
+&lt;h1 id=&#34;go-s-pointers-n-interfaces:afbad28d37502113e21a129455d477f1&#34;&gt;Go&amp;rsquo;s Pointers n&amp;rsquo; Interfaces&lt;/h1&gt;
+
+&lt;p&gt;The first thing I wanted to write in Go was a small app with some networking functionality. Luckily Go has &lt;em&gt;awesome&lt;/em&gt; resources for getting going. I started with replicating the code from their own &lt;a href=&#34;https://golang.org/doc/articles/wiki/&#34; title=&#34;Awesome Stuff&#34;&gt;Writing Web Applications&lt;/a&gt;:&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://golang.org/doc/articles/wiki/#tmp_3&#34;&gt;https://golang.org/doc/articles/wiki/#tmp_3&lt;/a&gt;
+&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;background-color: #f0f0f0; padding: 0 5px 0 5px&#34;&gt; 1 &lt;/span&gt;&lt;span style=&#34;color: #75715e&#34;&gt;// Main is the entry point for the program. &lt;/span&gt;
+&lt;span style=&#34;background-color: #f0f0f0; padding: 0 5px 0 5px&#34;&gt; 2 &lt;/span&gt;&lt;span style=&#34;color: #75715e&#34;&gt;// Here, the we&amp;#39;re calling on the http package to&lt;/span&gt;
+&lt;span style=&#34;background-color: #f0f0f0; padding: 0 5px 0 5px&#34;&gt; 3 &lt;/span&gt;&lt;span style=&#34;color: #75715e&#34;&gt;// listen on port 8080, and send all requests to the function &amp;#39;handler&amp;#39;&lt;/span&gt;
+&lt;span style=&#34;background-color: #f0f0f0; padding: 0 5px 0 5px&#34;&gt; 4 &lt;/span&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;func&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;main&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;()&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+&lt;span style=&#34;background-color: #f0f0f0; padding: 0 5px 0 5px&#34;&gt; 5 &lt;/span&gt;    &lt;span style=&#34;color: #a6e22e&#34;&gt;http&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;HandleFunc&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;/&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;handler&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
+&lt;span style=&#34;background-color: #f0f0f0; padding: 0 5px 0 5px&#34;&gt; 6 &lt;/span&gt;    &lt;span style=&#34;color: #a6e22e&#34;&gt;http&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;ListenAndServe&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;:8080&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;nil&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
+&lt;span style=&#34;background-color: #f0f0f0; padding: 0 5px 0 5px&#34;&gt; 7 &lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+&lt;span style=&#34;background-color: #f0f0f0; padding: 0 5px 0 5px&#34;&gt; 8 &lt;/span&gt;
+&lt;span style=&#34;background-color: #f0f0f0; padding: 0 5px 0 5px&#34;&gt; 9 &lt;/span&gt;&lt;span style=&#34;background-color: #49483e&#34;&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;func&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;handler&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;w&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;http&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;ResponseWriter&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;r&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;*&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;http&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;Request&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+&lt;/span&gt;&lt;span style=&#34;background-color: #f0f0f0; padding: 0 5px 0 5px&#34;&gt;10 &lt;/span&gt;    &lt;span style=&#34;color: #a6e22e&#34;&gt;fmt&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;Fprintf&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;w&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;Hi there, I love %s!&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;URL&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;Path&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;[&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;1&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;:])&lt;/span&gt;
+&lt;span style=&#34;background-color: #f0f0f0; padding: 0 5px 0 5px&#34;&gt;11 &lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;I highlighted the &lt;code&gt;handler&lt;/code&gt; function declaration to note where I had my first hangup with the language. Without knowing much about Go, this method signature struck me as odd. It looks like Go has the notion of explicit pointers based on the second parameter, &lt;code&gt;r *http.Request&lt;/code&gt;. But, why would something like a response writer &lt;code&gt;w http.ResponseWriter&lt;/code&gt;, something that I&amp;rsquo;m assuming is used to write a message back to the client, follow value semantics instead of reference semantics? If anything, I could see someone building a http lib with it the otherway around. If I send these parameters to another helper function, am I really passing around a copy of the response writer? If I am, maybe the &lt;code&gt;http.ResponseWriter&lt;/code&gt; has internal member variables that are pointers to socket I&amp;rsquo;d be writing a reponse to.&lt;/p&gt;
+
+&lt;p&gt;It turns out that the answer lies somewhere in between. Enter Go&amp;rsquo;s &lt;code&gt;Interface&lt;/code&gt; type. The &lt;a href=&#34;https://golang.org/pkg/net/http/&#34; title=&#34;Cool Link&#34;&gt;&lt;code&gt;http.ResponseWriter&lt;/code&gt;&lt;/a&gt; an instance of an interface. There&amp;rsquo;s no shortage of blogs describing Interfaces, and the respective styles for explaining them differ signifcantly, but here is a rundown that makes sense to me:&lt;/p&gt;
+
+&lt;p&gt;A Go Interface is a value type that holds two pointers: one to a value, and the other to a type descripton. That&amp;rsquo;s it.&lt;/p&gt;
+
+&lt;p&gt;But there are multiple interface types in Go, and certainly &lt;code&gt;http.ResponseWriter&lt;/code&gt; isn&amp;rsquo;t the only one. Very true, and you too can make infinite interface type declarations yourself. So, how do we come up with making the disctintion in method signatures? Isn&amp;rsquo;t Go a staticly typed language? &lt;em&gt;Yes&lt;/em&gt;, Go is definitely staticly typed, and Interfaces adhere to that strong type system by way of their respective method sets. Interface A is different from interface B because of it&amp;rsquo;s underlying value&amp;rsquo;s methods. &lt;em&gt;Put differently&lt;/em&gt;, an interface is defined by the method declarations that it&amp;rsquo;s type posesses.&lt;/p&gt;
+
+&lt;p&gt;Before we continure, it&amp;rsquo;s worth mentioning here that an inteface does &lt;em&gt;NOT&lt;/em&gt; make any disctintions based on it&amp;rsquo;s underlying type&amp;rsquo;s properties, or member variables.&lt;/p&gt;
+
+&lt;p&gt;When you declare that you accept an interface in Go, such as &lt;code&gt;http.ResponseWriter&lt;/code&gt; in our &lt;code&gt;handler&lt;/code&gt; call, you are saying that you don&amp;rsquo;t care what is being passed in, so long as it has the ability to do certain thing via its method set. Swift, Objecitve-C, Java, and many more languages have their notion of this type of protocol based programming model, but what makes Go distinct in this duck typing paradigm is that interfaces are a seperate type, they are NOT merely a abstract declaration used to faciltate polymorphism.&lt;/p&gt;
+
+&lt;p&gt;To make the previous point more clear, let&amp;rsquo;s say you declare the following protocol in swift and want to write a little greeting program:&lt;/p&gt;
+
+&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;protocol&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;Greetable&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+    &lt;span style=&#34;color: #66d9ef&#34;&gt;func&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;hello&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;()&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;-&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;String&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+
+&lt;span style=&#34;color: #66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;ValueSalutation&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;:&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;Greetable&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+    &lt;span style=&#34;color: #66d9ef&#34;&gt;func&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;hello&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;()&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;-&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;String&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+        &lt;span style=&#34;color: #66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;What up? I&amp;#39;m a value type&amp;quot;&lt;/span&gt;
+    &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+
+&lt;span style=&#34;color: #66d9ef&#34;&gt;class&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;ReferenceSalutation&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;:&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;Greetable&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+    &lt;span style=&#34;color: #66d9ef&#34;&gt;func&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;hello&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;()&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;-&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;String&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+        &lt;span style=&#34;color: #66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;Heyooo~!!, Reference type here&amp;quot;&lt;/span&gt;
+    &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+
+&lt;span style=&#34;color: #66d9ef&#34;&gt;func&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;introdceYourself&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(stranger:&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;Greetable)&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+    &lt;span style=&#34;color: #f8f8f2&#34;&gt;print(stranger.hello())&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;introdceYourself(ValueSalutation())&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;introdceYourself(ReferenceSalutation())&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;In &lt;code&gt;introdceYourself&lt;/code&gt;, swift doesn&amp;rsquo;t who&amp;rsquo;s coming through as the &lt;code&gt;stranger&lt;/code&gt; variable, so long as it&amp;rsquo;s type declares its conformance to the Greetable protocol. Both the class and struct have declarations that they conform to the &lt;code&gt;Greetable&lt;/code&gt; protocol, and the compiler enforces this adherence. Inside &lt;code&gt;introdceYourself&lt;/code&gt;, you aren&amp;rsquo;t sure whether you&amp;rsquo;re dealing with a value type, or a refernce type. All you know is that stranger possess the ability to say &lt;code&gt;hello&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Now, let&amp;rsquo;s see the same program in go:&lt;/p&gt;
+
+&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;type&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;Greetable&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;interface&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+	&lt;span style=&#34;color: #a6e22e&#34;&gt;hello&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;()&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;string&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+
+&lt;span style=&#34;color: #66d9ef&#34;&gt;type&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;GoSalutation&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;struct&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{}&lt;/span&gt;
+
+&lt;span style=&#34;color: #66d9ef&#34;&gt;func&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;s&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;Salutation&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;hello&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;()&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;string&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+	&lt;span style=&#34;color: #66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;Heyyoo from a Go Stuct!!&amp;quot;&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+
+&lt;span style=&#34;color: #66d9ef&#34;&gt;func&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;introduceYourself&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;g&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;Greetable&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+	&lt;span style=&#34;color: #a6e22e&#34;&gt;fmt&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;Println&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;g&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;hello&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;())&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+
+&lt;span style=&#34;color: #66d9ef&#34;&gt;func&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;main&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;()&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+	&lt;span style=&#34;color: #a6e22e&#34;&gt;s&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;GoSalutation&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;{}&lt;/span&gt;
+	&lt;span style=&#34;color: #a6e22e&#34;&gt;introduceYourself&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;s&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The difference here is that inside &lt;code&gt;introduceYourself&lt;/code&gt;, we are not receiving an instance, or copy of GoSalutation, rather we receive an an interface type &lt;code&gt;Greetable&lt;/code&gt;. When we pass the instance of &lt;code&gt;GoSalutation&lt;/code&gt;, it is being automatically boxed up for us into an interface type. It&amp;rsquo;s a compile time safety check that determines whether or not can satisfy &lt;code&gt;Greetable&lt;/code&gt;, it&amp;rsquo;s &lt;em&gt;NOT&lt;/em&gt; due to whether &lt;code&gt;GoSalutation&lt;/code&gt; explictly declares some type of conformance. Also, there&amp;rsquo;s is no question whether we are dealing with a reference type or a value type any longer, we simply know that this the underlying, or &lt;code&gt;dynamic type&lt;/code&gt;, of the Greetable parameter posesses the ability to say &lt;code&gt;hello()&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;I&amp;rsquo;m not advocating Go&amp;rsquo;s approach to protocol based programming over swift&amp;rsquo;s, or any other languages, I&amp;rsquo;m just using this example to draw the disctintion, and to illustrate what is really happening when you pass types to methods that accept interfaces.&lt;/p&gt;
+
+&lt;h1 id=&#34;back-to-the-interface:afbad28d37502113e21a129455d477f1&#34;&gt;Back to the Interface&lt;/h1&gt;
+
+&lt;p&gt;So, now knowing that an interface is simply a some value type that points to some other types that posses certain method declarations, how does this influence how we understand what is going on with &lt;code&gt;http.responseWriter&lt;/code&gt;? Let&amp;rsquo;s look at what the &lt;code&gt;http.responseWriter&lt;/code&gt; interace actually declares:&lt;/p&gt;
+
+&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;type&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;ResponseWriter&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;interface&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+        &lt;span style=&#34;color: #a6e22e&#34;&gt;Header&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;()&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;Header&lt;/span&gt;
+
+        &lt;span style=&#34;color: #a6e22e&#34;&gt;Write&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;([]&lt;/span&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;byte&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;int&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;error&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
+
+        &lt;span style=&#34;color: #a6e22e&#34;&gt;WriteHeader&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;int&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Suprisingly thin - huh? But that&amp;rsquo;s kinda cool. When we decalre that a method accepts a &lt;code&gt;http.responseWriter&lt;/code&gt; of type interface, all we&amp;rsquo;re saying is that you can call three distinct methods on the underlying dynamic value, and that the underlying type is of no concern to you.&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

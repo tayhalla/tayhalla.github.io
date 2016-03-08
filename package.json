@@ -5,6 +5,6 @@
   "description": "Bloggin",
   "scripts": {
     "deploy": "./lib/deploy.sh",
-    "start": "hugo server -t cactus"
+    "start": "hugo server -w -t cactus"
   }
 }

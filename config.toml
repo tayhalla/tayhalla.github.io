@@ -1,17 +1,15 @@
 # Site settings
 baseurl = "http://replace-this-with-your-domain.com/"
 languageCode = "en-us"
-title = "Hugo Cactus Theme"
-theme = "Cactus"
 
 [params]
 	name = "Taylor Halliday"
 	description = "SF / SEA. Programming and everything else"
 	bio = "SF / SEA. Programming and everything else"
 	# Enter optionally your twitter account
-	twitter = "Your Twitter account"
+	twitter = "@tayhalliday"
 	# Disable comments by leaving disqusShortname empty
-	disqusShortname = "spf13"
+	disqusShortname = "tayhalla"
 	# Enter your tracking code to enable Google Analytics
 	googleAnalytics = ""
 	enableRSS = true
@@ -29,7 +27,6 @@ theme = "Cactus"
 	readMore = ""
 	copyright = ""
 	# Sharing options and author information in posts
-	aboutAuthor = "I'm an enthusiastic gopher."
 	tweet = ""
 	share = ""
 	# 404 page
