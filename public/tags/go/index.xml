@@ -2,19 +2,19 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Go on Taylor Halliday</title>
-    <link>http://tayhalla.github.io/tags/go/</link>
+    <link>http://tayhalla.github.io/blog/tags/go/</link>
     <description>Recent content in Go on Taylor Halliday</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Mon, 25 Jan 2016 00:00:00 +0000</lastBuildDate>
-    <atom:link href="http://tayhalla.github.io/tags/go/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://tayhalla.github.io/blog/tags/go/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
       <title>Interfaces in Go</title>
-      <link>http://tayhalla.github.io/post/interfacesInGo/</link>
+      <link>http://tayhalla.github.io/blog/post/interfacesInGo/</link>
       <pubDate>Mon, 25 Jan 2016 00:00:00 +0000</pubDate>
       
-      <guid>http://tayhalla.github.io/post/interfacesInGo/</guid>
+      <guid>http://tayhalla.github.io/blog/post/interfacesInGo/</guid>
       <description>
 
 &lt;p&gt;Go has been a interesting language for me to learn. I love how the language reminds me of writing in C, but it comes with the comfort of having some hardened core libs and memory managemnt baked in. One thing that struck me as odd about it though was the concept of interfaces.&lt;/p&gt;

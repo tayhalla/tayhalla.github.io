@@ -1,5 +1,5 @@
 # Site settings
-baseurl = "http://tayhalla.github.io"
+baseurl = "http://tayhalla.github.io/blog/"
 languageCode = "en-us"
 title="Taylor Halliday"
 

@@ -39,7 +39,7 @@ dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), 
 });
 {{< /highlight >}}
 
-{{< figure src="/media/polyline_complete.gif" class="map-img">}}
+{{< figure src="/blog/media/polyline_complete.gif" class="map-img">}}
 
 Boom!
 
@@ -92,7 +92,7 @@ Here's the code:
 
 And the result? A smooth animation across the screen for my polylines:
 
-{{< figure src="/media/cadisplay_polyline.gif" class="map-img">}}
+{{< figure src="/blog/media/cadisplay_polyline.gif" class="map-img">}}
 
 
 POP and Other Animation Frameworks
