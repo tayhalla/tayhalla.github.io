@@ -28,7 +28,7 @@
                 <section id="post-body">
                     
 
-<p>Go has been a interesting language for me to learn. I love how the language reminds me of writing in C, but it comes with the comfort of having some hardened core libs and memory managemnt baked in. One thing that struck me as odd about it though was the concept of interfaces.</p>
+<p>Go has been a interesting language for me to learn. I love how the language reminds me of writing in C, but it comes with the comfort of having some hardened core libs and memory management baked in. One thing that struck me as odd about it though was the concept of interfaces.</p>
 
 <h1 id="go-s-pointers-n-interfaces:afbad28d37502113e21a129455d477f1">Go&rsquo;s Pointers n&rsquo; Interfaces</h1>
 
@@ -49,17 +49,17 @@
 </pre></div>
 </p>
 
-<p>I highlighted the <code>handler</code> function declaration to note where I had my first hangup with the language. Without knowing much about Go, this method signature struck me as odd. It looks like Go has the notion of explicit pointers based on the second parameter, <code>r *http.Request</code>. But, why would something like a response writer <code>w http.ResponseWriter</code>, something that I&rsquo;m assuming is used to write a message back to the client, follow value semantics instead of reference semantics? If anything, I could see someone building a http lib with it the otherway around. If I send these parameters to another helper function, am I really passing around a copy of the response writer? If I am, maybe the <code>http.ResponseWriter</code> has internal member variables that are pointers to socket I&rsquo;d be writing a reponse to.</p>
+<p>I highlighted the <code>handler</code> function declaration to note where I had my first hangup with the language. Without knowing much about Go, this method signature struck me as odd. It looks like Go has the notion of explicit pointers based on the second parameter, <code>r *http.Request</code>. But, why would something like a response writer <code>w http.ResponseWriter</code>, something that I&rsquo;m assuming is used to write a message back to the client, follow value semantics instead of reference semantics? If anything, I could see someone building a http lib with it the other way around. If I send these parameters to another helper function, am I really passing around a copy of the response writer? If I am, maybe the <code>http.ResponseWriter</code> has internal member variables that are pointers to socket I&rsquo;d be writing a response to.</p>
 
-<p>It turns out that the answer lies somewhere in between. Enter Go&rsquo;s <code>Interface</code> type. The <a href="https://golang.org/pkg/net/http/" title="Cool Link"><code>http.ResponseWriter</code></a> an instance of an interface. There&rsquo;s no shortage of blogs describing Interfaces, and the respective styles for explaining them differ signifcantly, but here is a rundown that makes sense to me:</p>
+<p>It turns out that the answer lies somewhere in between. Enter Go&rsquo;s <code>Interface</code> type. The <a href="https://golang.org/pkg/net/http/" title="Cool Link"><code>http.ResponseWriter</code></a> an instance of an interface. There&rsquo;s no shortage of blogs describing Interfaces, and the respective styles for explaining them differ significantly, but here is a rundown that makes sense to me:</p>
 
-<p>A Go Interface is a value type that holds two pointers: one to a value, and the other to a type descripton. That&rsquo;s it.</p>
+<p>A Go Interface is a value type that holds two pointers: one to a value, and the other to a type description. That&rsquo;s it.</p>
 
-<p>But there are multiple interface types in Go, and certainly <code>http.ResponseWriter</code> isn&rsquo;t the only one. Very true, and you too can make infinite interface type declarations yourself. So, how do we come up with making the disctintion in method signatures? Isn&rsquo;t Go a staticly typed language? <em>Yes</em>, Go is definitely staticly typed, and Interfaces adhere to that strong type system by way of their respective method sets. Interface A is different from interface B because of it&rsquo;s underlying value&rsquo;s methods. <em>Put differently</em>, an interface is defined by the method declarations that it&rsquo;s type posesses.</p>
+<p>But there are multiple interface types in Go, and certainly <code>http.ResponseWriter</code> isn&rsquo;t the only one. Very true, and you too can make infinite interface type declarations yourself. So, how do we come up with making the distinction in method signatures? Isn&rsquo;t Go a statically typed language? <em>Yes</em>, Go is definitely statically typed, and Interfaces adhere to that strong type system by way of their respective method sets. Interface A is different from interface B because of it&rsquo;s underlying value&rsquo;s methods. <em>Put differently</em>, an interface is defined by the method declarations that it&rsquo;s type possesses.</p>
 
-<p>Before we continure, it&rsquo;s worth mentioning here that an inteface does <em>NOT</em> make any disctintions based on it&rsquo;s underlying type&rsquo;s properties, or member variables.</p>
+<p>Before we continue, it&rsquo;s worth mentioning here that an interface does <em>NOT</em> make any distinctions based on it&rsquo;s underlying type&rsquo;s properties, or member variables.</p>
 
-<p>When you declare that you accept an interface in Go, such as <code>http.ResponseWriter</code> in our <code>handler</code> call, you are saying that you don&rsquo;t care what is being passed in, so long as it has the ability to do certain thing via its method set. Swift, Objecitve-C, Java, and many more languages have their notion of this type of protocol based programming model, but what makes Go distinct in this duck typing paradigm is that interfaces are a seperate type, they are NOT merely a abstract declaration used to faciltate polymorphism.</p>
+<p>When you declare that you accept an interface in Go, such as <code>http.ResponseWriter</code> in our <code>handler</code> call, you are saying that you don&rsquo;t care what is being passed in, so long as it has the ability to do certain thing via its method set. Swift, Objective-C, Java, and many more languages have their notion of this type of protocol based programming model, but what makes Go distinct in this duck typing paradigm is that interfaces are a separate type, they are NOT merely a abstract declaration used to facilitate polymorphism.</p>
 
 <p>To make the previous point more clear, let&rsquo;s say you declare the following protocol in swift and want to write a little greeting program:</p>
 
@@ -88,7 +88,7 @@
 </pre></div>
 
 
-<p>In <code>introdceYourself</code>, swift doesn&rsquo;t who&rsquo;s coming through as the <code>stranger</code> variable, so long as it&rsquo;s type declares its conformance to the Greetable protocol. Both the class and struct have declarations that they conform to the <code>Greetable</code> protocol, and the compiler enforces this adherence. Inside <code>introdceYourself</code>, you aren&rsquo;t sure whether you&rsquo;re dealing with a value type, or a refernce type. All you know is that stranger possess the ability to say <code>hello</code>.</p>
+<p>In <code>introdceYourself</code>, swift doesn&rsquo;t who&rsquo;s coming through as the <code>stranger</code> variable, so long as it&rsquo;s type declares its conformance to the Greetable protocol. Both the class and struct have declarations that they conform to the <code>Greetable</code> protocol, and the compiler enforces this adherence. Inside <code>introdceYourself</code>, you aren&rsquo;t sure whether you&rsquo;re dealing with a value type, or a reference type. All you know is that stranger possess the ability to say <code>hello</code>.</p>
 
 <p>Now, let&rsquo;s see the same program in go:</p>
 
@@ -113,13 +113,13 @@
 </pre></div>
 
 
-<p>The difference here is that inside <code>introduceYourself</code>, we are not receiving an instance, or copy of GoSalutation, rather we receive an an interface type <code>Greetable</code>. When we pass the instance of <code>GoSalutation</code>, it is being automatically boxed up for us into an interface type. It&rsquo;s a compile time safety check that determines whether or not can satisfy <code>Greetable</code>, it&rsquo;s <em>NOT</em> due to whether <code>GoSalutation</code> explictly declares some type of conformance. Also, there&rsquo;s is no question whether we are dealing with a reference type or a value type any longer, we simply know that this the underlying, or <code>dynamic type</code>, of the Greetable parameter posesses the ability to say <code>hello()</code>.</p>
+<p>The difference here is that inside <code>introduceYourself</code>, we are not receiving an instance, or copy of GoSalutation, rather we receive an an interface type <code>Greetable</code>. When we pass the instance of <code>GoSalutation</code>, it is being automatically boxed up for us into an interface type. It&rsquo;s a compile time safety check that determines whether or not can satisfy <code>Greetable</code>, it&rsquo;s <em>NOT</em> due to whether <code>GoSalutation</code> explicitly declares some type of conformance. Also, there&rsquo;s is no question whether we are dealing with a reference type or a value type any longer, we simply know that this the underlying, or <code>dynamic type</code>, of the Greetable parameter possesses the ability to say <code>hello()</code>.</p>
 
-<p>I&rsquo;m not advocating Go&rsquo;s approach to protocol based programming over swift&rsquo;s, or any other languages, I&rsquo;m just using this example to draw the disctintion, and to illustrate what is really happening when you pass types to methods that accept interfaces.</p>
+<p>I&rsquo;m not advocating Go&rsquo;s approach to protocol based programming over swift&rsquo;s, or any other languages, I&rsquo;m just using this example to draw the distinction, and to illustrate what is really happening when you pass types to methods that accept interfaces.</p>
 
 <h1 id="back-to-the-interface:afbad28d37502113e21a129455d477f1">Back to the Interface</h1>
 
-<p>So, now knowing that an interface is simply a some value type that points to some other types that posses certain method declarations, how does this influence how we understand what is going on with <code>http.responseWriter</code>? Let&rsquo;s look at what the <code>http.responseWriter</code> interace actually declares:</p>
+<p>So, now knowing that an interface is simply a some value type that points to some other types that posses certain method declarations, how does this influence how we understand what is going on with <code>http.responseWriter</code>? Let&rsquo;s look at what the <code>http.responseWriter</code> interface actually declares:</p>
 
 <div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">type</span> <span style="color: #a6e22e">ResponseWriter</span> <span style="color: #66d9ef">interface</span> <span style="color: #f8f8f2">{</span>
         <span style="color: #a6e22e">Header</span><span style="color: #f8f8f2">()</span> <span style="color: #a6e22e">Header</span>
@@ -131,7 +131,7 @@
 </pre></div>
 
 
-<p>Suprisingly thin - huh? But that&rsquo;s kinda cool. When we decalre that a method accepts a <code>http.responseWriter</code> of type interface, all we&rsquo;re saying is that you can call three distinct methods on the underlying dynamic value, and that the underlying type is of no concern to you.</p>
+<p>Surprisingly thin - huh? But that&rsquo;s kinda cool. When we declare that a method accepts a <code>http.responseWriter</code> of type interface, all we&rsquo;re saying is that you can call three distinct methods on the underlying dynamic value, and that the underlying type is of no concern to you.</p>
 
                 </section>
             </article>
@@ -166,6 +166,13 @@
             <ul id="post-list" class="archive readmore">
     <h3>Read more</h3>
     
+    
+        
+        <li>
+            <a href="http://tayhalla.github.io/blog/post/envsInXCode/">Managing ENVs In XCode<aside class="dates">Mar 6</aside></a>
+        </li>
+        
+   
     
         
         <li>

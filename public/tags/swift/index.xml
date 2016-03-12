@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Swift on Taylor Halliday</title>
+    <link>http://tayhalla.github.io/blog/tags/swift/</link>
+    <description>Recent content in Swift on Taylor Halliday</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 06 Mar 2016 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://tayhalla.github.io/blog/tags/swift/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Managing ENVs In XCode</title>
+      <link>http://tayhalla.github.io/blog/post/envsInXCode/</link>
+      <pubDate>Sun, 06 Mar 2016 00:00:00 +0000</pubDate>
+      
+      <guid>http://tayhalla.github.io/blog/post/envsInXCode/</guid>
+      <description>
+
+&lt;p&gt;This post is a small one about work flow in XCode. There&amp;rsquo;s no explicit way to have XCode set ENVs for you. When I started working with the IDE, I would simply comment or uncomment certain sections of code based on the ENV I was trying to target.&lt;/p&gt;
+
+&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;class&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;MyAppAPI&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+    &lt;span style=&#34;color: #66d9ef&#34;&gt;static&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;var&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;debug:&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;Bool&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;true&lt;/span&gt;
+    &lt;span style=&#34;color: #66d9ef&#34;&gt;static&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;var&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;baseURL:&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;String&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+        &lt;span style=&#34;color: #66d9ef&#34;&gt;get&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+            &lt;span style=&#34;color: #66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;debug&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+                &lt;span style=&#34;color: #66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;http://debug.someAPI.com&amp;quot;&lt;/span&gt;
+            &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;else&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+                &lt;span style=&#34;color: #66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;http://someAPI.com&amp;quot;&lt;/span&gt;
+            &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+        &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+    &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;As your application grows though, this kind of code can pop up in multiple classes. You could deal with it by making a central config class/stuct, but the idea of continually changing a single variable in the code that would drastically change behavior felt like an unsafe thing to do. Also, I would like to know the context of the code I&amp;rsquo;m looking at without having to navigate back and forth between a config file to see what environment I am operating under.&lt;/p&gt;
+
+&lt;h1 id=&#34;xcode-schemes:06b4a5a12e9d1f0703fe2b52d22ccedd&#34;&gt;XCode Schemes&lt;/h1&gt;
+
+&lt;p&gt;Xcode has a nice little drop down selector next to the device your targeting. It&amp;rsquo;s called the Scheme Selector:&lt;/p&gt;
+
+
+&lt;figure &gt;
+    
+        &lt;img src=&#34;http://tayhalla.github.io/blog/blog/media/scheme-selector.gif&#34; /&gt;
+    
+    
+&lt;/figure&gt;
+
+
+&lt;p&gt;Per the &lt;a href=&#34;https://developer.apple.com/library/ios/featuredarticles/XcodeConcepts/Concept-Schemes.html&#34; title=&#34;Boring Apple Docs&#34;&gt;XCode Docs&lt;/a&gt;, here&amp;rsquo;s what they have to say about what a scheme selector is used for:&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;An Xcode scheme defines a collection of targets to build, a configuration to use when building, and a collection of tests to execute.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Ok, sounds like this little drop down might have something to do with what we want. But, how do we select this configuration? Or, how do we configure the &lt;code&gt;Configuration&lt;/code&gt; to our liking?&lt;/p&gt;
+
+&lt;p&gt;Turns out they&amp;rsquo;re not using the term &amp;lsquo;Configuration&amp;rsquo; colloquially  - XCode has something call &amp;lsquo;XCode Configurations&amp;rsquo;&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>
