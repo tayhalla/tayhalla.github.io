@@ -90,7 +90,7 @@
 <p>A CADisplayLink object is a timer object that allows your application to synchronize its drawing to the refresh rate of the display. Your application creates a new display link, providing a target object and a selector to be called when the screen is updated</p>
 </blockquote>
 
-<p>Sounds like just what we need. The API for <code>CADisplayLink</code> is pretty similiar to NSTimer. You alloc/init an instance, assign is to a runloop, give it a target and selector, and you have a callback that occurs whenever a redraw is about to happen on the screen.</p>
+<p>Sounds like just what we need. The API for <code>CADisplayLink</code> is pretty similar to NSTimer. You alloc/init an instance, assign is to a runloop, give it a target and selector, and you have a callback that occurs whenever a redraw is about to happen on the screen.</p>
 
 <p>Here&rsquo;s the code:</p>
 
@@ -134,13 +134,13 @@
 
 <h1 id="pop-and-other-animation-frameworks:48e3a9cef42133d4e3a0accdf42773f4">POP and Other Animation Frameworks</h1>
 
-<p>CADisplayLink is actually the key to any animation framework. An animation on the screen is simply displaying the interpolation of values over the screen. The only thing that makes POP and other animations a bit more complicated is the concept of timing curves - the of the change in animateable values over the change in time. With the <code>[UIView animate...]</code> functions, you may recegnize them as the <code>UIViewAnimationCurve</code> enum. They define whether the animaiton will proceed in a linear fashion, or if it will speed up and/or slow down at certain points in the process.</p>
+<p>CADisplayLink is actually the key to any animation framework. An animation on the screen is simply displaying the interpolation of values over the screen. The only thing that makes POP and other animations a bit more complicated is the concept of timing curves - the rate of the change in animateable values over the change in time. With the <code>[UIView animate...]</code> functions, you may recognize them as the <code>UIViewAnimationCurve</code> enum. They define whether the animation will proceed in a linear fashion, or if it will speed up and/or slow down at certain points in the process.</p>
 
-<p>For instance though, if you look at POP&rsquo;s root animtor class, you will find it <a href="https://github.com/facebook/pop/blob/master/pop/POPAnimator.mm#L347">hooking up a CADiaplyLink in the init</a>, and it&rsquo;s callback is the <a href="https://github.com/facebook/pop/blob/master/pop/POPAnimator.mm#L425">core render method in the animation</a>.</p>
+<p>For instance though, if you look at POP&rsquo;s root animator class, you will find it <a href="https://github.com/facebook/pop/blob/master/pop/POPAnimator.mm#L347">hooking up a CADiaplyLink in the init</a>, and it&rsquo;s callback is the <a href="https://github.com/facebook/pop/blob/master/pop/POPAnimator.mm#L425">core render method in the animation</a>.</p>
 
 <h1 id="a-note-on-interpolation:48e3a9cef42133d4e3a0accdf42773f4">A Note On Interpolation</h1>
 
-<p>In the previous section on animating a polyline, I oversimplified the process a bit. While you can simply interpolate between lat/lng pairs relative to the total distance in polyline, you need to be sure you&rsquo;re hitting all of the original points provided to the polyline. This means that whenever you receive a callback to come up with a new point to put on screen, you need to check to make sure that all of the original control points (ends/beginings of the lines) were laid out where they needed to be. In order to do that, we need to preprocess the line to figure out each control pairs&rsquo; position in our longer collection of interpolated points. Here is the code to preprocess the interpolation:</p>
+<p>In the previous section on animating a polyline, I oversimplified the process a bit. While you can simply interpolate between lat/lng pairs relative to the total distance in polyline, you need to be sure you&rsquo;re hitting all of the original points provided to the polyline. This means that whenever you receive a callback to come up with a new point to put on screen, you need to check to make sure that all of the original control points (ends/beginnings of the lines) were laid out where they needed to be. In order to do that, we need to preprocess the line to figure out each control pairs&rsquo; position in our longer collection of interpolated points. Here is the code to preprocess the interpolation:</p>
 
 <div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #75715e">// *** Create the polyline route ***</span>
 <span style="color: #66d9ef">unsigned</span> <span style="color: #66d9ef">int</span> <span style="color: #f8f8f2">polylineCount</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">(</span><span style="color: #66d9ef">int</span><span style="color: #f8f8f2">)self.locations.count;</span>
@@ -268,6 +268,13 @@
             <ul id="post-list" class="archive readmore">
     <h3>Read more</h3>
     
+    
+        
+        <li>
+            <a href="http://tayhalla.github.io/blog/post/envsInXCode/">Managing ENVs In XCode<aside class="dates">Mar 6</aside></a>
+        </li>
+        
+   
     
         
    

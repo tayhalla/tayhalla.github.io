@@ -6,8 +6,60 @@
     <description>Recent content on Taylor Halliday</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 25 Feb 2016 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 06 Mar 2016 00:00:00 +0000</lastBuildDate>
     <atom:link href="http://tayhalla.github.io/blog/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Managing ENVs In XCode</title>
+      <link>http://tayhalla.github.io/blog/post/envsInXCode/</link>
+      <pubDate>Sun, 06 Mar 2016 00:00:00 +0000</pubDate>
+      
+      <guid>http://tayhalla.github.io/blog/post/envsInXCode/</guid>
+      <description>
+
+&lt;p&gt;This post is a small one about work flow in XCode. There&amp;rsquo;s no explicit way to have XCode set ENVs for you. When I started working with the IDE, I would simply comment or uncomment certain sections of code based on the ENV I was trying to target.&lt;/p&gt;
+
+&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;class&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;MyAppAPI&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+    &lt;span style=&#34;color: #66d9ef&#34;&gt;static&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;var&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;debug:&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;Bool&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;true&lt;/span&gt;
+    &lt;span style=&#34;color: #66d9ef&#34;&gt;static&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;var&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;baseURL:&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;String&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+        &lt;span style=&#34;color: #66d9ef&#34;&gt;get&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+            &lt;span style=&#34;color: #66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;debug&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+                &lt;span style=&#34;color: #66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;http://debug.someAPI.com&amp;quot;&lt;/span&gt;
+            &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;else&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+                &lt;span style=&#34;color: #66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;http://someAPI.com&amp;quot;&lt;/span&gt;
+            &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+        &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+    &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;As your application grows though, this kind of code can pop up in multiple classes. You could deal with it by making a central config class/stuct, but the idea of continually changing a single variable in the code that would drastically change behavior felt like an unsafe thing to do. Also, I would like to know the context of the code I&amp;rsquo;m looking at without having to navigate back and forth between a config file to see what environment I am operating under.&lt;/p&gt;
+
+&lt;h1 id=&#34;xcode-schemes:06b4a5a12e9d1f0703fe2b52d22ccedd&#34;&gt;XCode Schemes&lt;/h1&gt;
+
+&lt;p&gt;Xcode has a nice little drop down selector next to the device your targeting. It&amp;rsquo;s called the Scheme Selector:&lt;/p&gt;
+
+
+&lt;figure &gt;
+    
+        &lt;img src=&#34;http://tayhalla.github.io/blog/blog/media/scheme-selector.gif&#34; /&gt;
+    
+    
+&lt;/figure&gt;
+
+
+&lt;p&gt;Per the &lt;a href=&#34;https://developer.apple.com/library/ios/featuredarticles/XcodeConcepts/Concept-Schemes.html&#34; title=&#34;Boring Apple Docs&#34;&gt;XCode Docs&lt;/a&gt;, here&amp;rsquo;s what they have to say about what a scheme selector is used for:&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;An Xcode scheme defines a collection of targets to build, a configuration to use when building, and a collection of tests to execute.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Ok, sounds like this little drop down might have something to do with what we want. But, how do we select this configuration? Or, how do we configure the &lt;code&gt;Configuration&lt;/code&gt; to our liking?&lt;/p&gt;
+
+&lt;p&gt;Turns out they&amp;rsquo;re not using the term &amp;lsquo;Configuration&amp;rsquo; colloquially  - XCode has something call &amp;lsquo;XCode Configurations&amp;rsquo;&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>CADisplayLink and Maps</title>
@@ -79,7 +131,7 @@
 &lt;p&gt;A CADisplayLink object is a timer object that allows your application to synchronize its drawing to the refresh rate of the display. Your application creates a new display link, providing a target object and a selector to be called when the screen is updated&lt;/p&gt;
 &lt;/blockquote&gt;
 
-&lt;p&gt;Sounds like just what we need. The API for &lt;code&gt;CADisplayLink&lt;/code&gt; is pretty similiar to NSTimer. You alloc/init an instance, assign is to a runloop, give it a target and selector, and you have a callback that occurs whenever a redraw is about to happen on the screen.&lt;/p&gt;
+&lt;p&gt;Sounds like just what we need. The API for &lt;code&gt;CADisplayLink&lt;/code&gt; is pretty similar to NSTimer. You alloc/init an instance, assign is to a runloop, give it a target and selector, and you have a callback that occurs whenever a redraw is about to happen on the screen.&lt;/p&gt;
 
 &lt;p&gt;Here&amp;rsquo;s the code:&lt;/p&gt;
 
@@ -123,13 +175,13 @@
 
 &lt;h1 id=&#34;pop-and-other-animation-frameworks:48e3a9cef42133d4e3a0accdf42773f4&#34;&gt;POP and Other Animation Frameworks&lt;/h1&gt;
 
-&lt;p&gt;CADisplayLink is actually the key to any animation framework. An animation on the screen is simply displaying the interpolation of values over the screen. The only thing that makes POP and other animations a bit more complicated is the concept of timing curves - the of the change in animateable values over the change in time. With the &lt;code&gt;[UIView animate...]&lt;/code&gt; functions, you may recegnize them as the &lt;code&gt;UIViewAnimationCurve&lt;/code&gt; enum. They define whether the animaiton will proceed in a linear fashion, or if it will speed up and/or slow down at certain points in the process.&lt;/p&gt;
+&lt;p&gt;CADisplayLink is actually the key to any animation framework. An animation on the screen is simply displaying the interpolation of values over the screen. The only thing that makes POP and other animations a bit more complicated is the concept of timing curves - the rate of the change in animateable values over the change in time. With the &lt;code&gt;[UIView animate...]&lt;/code&gt; functions, you may recognize them as the &lt;code&gt;UIViewAnimationCurve&lt;/code&gt; enum. They define whether the animation will proceed in a linear fashion, or if it will speed up and/or slow down at certain points in the process.&lt;/p&gt;
 
-&lt;p&gt;For instance though, if you look at POP&amp;rsquo;s root animtor class, you will find it &lt;a href=&#34;https://github.com/facebook/pop/blob/master/pop/POPAnimator.mm#L347&#34;&gt;hooking up a CADiaplyLink in the init&lt;/a&gt;, and it&amp;rsquo;s callback is the &lt;a href=&#34;https://github.com/facebook/pop/blob/master/pop/POPAnimator.mm#L425&#34;&gt;core render method in the animation&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;For instance though, if you look at POP&amp;rsquo;s root animator class, you will find it &lt;a href=&#34;https://github.com/facebook/pop/blob/master/pop/POPAnimator.mm#L347&#34;&gt;hooking up a CADiaplyLink in the init&lt;/a&gt;, and it&amp;rsquo;s callback is the &lt;a href=&#34;https://github.com/facebook/pop/blob/master/pop/POPAnimator.mm#L425&#34;&gt;core render method in the animation&lt;/a&gt;.&lt;/p&gt;
 
 &lt;h1 id=&#34;a-note-on-interpolation:48e3a9cef42133d4e3a0accdf42773f4&#34;&gt;A Note On Interpolation&lt;/h1&gt;
 
-&lt;p&gt;In the previous section on animating a polyline, I oversimplified the process a bit. While you can simply interpolate between lat/lng pairs relative to the total distance in polyline, you need to be sure you&amp;rsquo;re hitting all of the original points provided to the polyline. This means that whenever you receive a callback to come up with a new point to put on screen, you need to check to make sure that all of the original control points (ends/beginings of the lines) were laid out where they needed to be. In order to do that, we need to preprocess the line to figure out each control pairs&amp;rsquo; position in our longer collection of interpolated points. Here is the code to preprocess the interpolation:&lt;/p&gt;
+&lt;p&gt;In the previous section on animating a polyline, I oversimplified the process a bit. While you can simply interpolate between lat/lng pairs relative to the total distance in polyline, you need to be sure you&amp;rsquo;re hitting all of the original points provided to the polyline. This means that whenever you receive a callback to come up with a new point to put on screen, you need to check to make sure that all of the original control points (ends/beginnings of the lines) were laid out where they needed to be. In order to do that, we need to preprocess the line to figure out each control pairs&amp;rsquo; position in our longer collection of interpolated points. Here is the code to preprocess the interpolation:&lt;/p&gt;
 
 &lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #75715e&#34;&gt;// *** Create the polyline route ***&lt;/span&gt;
 &lt;span style=&#34;color: #66d9ef&#34;&gt;unsigned&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;int&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;polylineCount&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;int&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)self.locations.count;&lt;/span&gt;
@@ -234,7 +286,7 @@
       <guid>http://tayhalla.github.io/blog/post/interfacesInGo/</guid>
       <description>
 
-&lt;p&gt;Go has been a interesting language for me to learn. I love how the language reminds me of writing in C, but it comes with the comfort of having some hardened core libs and memory managemnt baked in. One thing that struck me as odd about it though was the concept of interfaces.&lt;/p&gt;
+&lt;p&gt;Go has been a interesting language for me to learn. I love how the language reminds me of writing in C, but it comes with the comfort of having some hardened core libs and memory management baked in. One thing that struck me as odd about it though was the concept of interfaces.&lt;/p&gt;
 
 &lt;h1 id=&#34;go-s-pointers-n-interfaces:afbad28d37502113e21a129455d477f1&#34;&gt;Go&amp;rsquo;s Pointers n&amp;rsquo; Interfaces&lt;/h1&gt;
 
@@ -255,17 +307,17 @@
 &lt;/pre&gt;&lt;/div&gt;
 &lt;/p&gt;
 
-&lt;p&gt;I highlighted the &lt;code&gt;handler&lt;/code&gt; function declaration to note where I had my first hangup with the language. Without knowing much about Go, this method signature struck me as odd. It looks like Go has the notion of explicit pointers based on the second parameter, &lt;code&gt;r *http.Request&lt;/code&gt;. But, why would something like a response writer &lt;code&gt;w http.ResponseWriter&lt;/code&gt;, something that I&amp;rsquo;m assuming is used to write a message back to the client, follow value semantics instead of reference semantics? If anything, I could see someone building a http lib with it the otherway around. If I send these parameters to another helper function, am I really passing around a copy of the response writer? If I am, maybe the &lt;code&gt;http.ResponseWriter&lt;/code&gt; has internal member variables that are pointers to socket I&amp;rsquo;d be writing a reponse to.&lt;/p&gt;
+&lt;p&gt;I highlighted the &lt;code&gt;handler&lt;/code&gt; function declaration to note where I had my first hangup with the language. Without knowing much about Go, this method signature struck me as odd. It looks like Go has the notion of explicit pointers based on the second parameter, &lt;code&gt;r *http.Request&lt;/code&gt;. But, why would something like a response writer &lt;code&gt;w http.ResponseWriter&lt;/code&gt;, something that I&amp;rsquo;m assuming is used to write a message back to the client, follow value semantics instead of reference semantics? If anything, I could see someone building a http lib with it the other way around. If I send these parameters to another helper function, am I really passing around a copy of the response writer? If I am, maybe the &lt;code&gt;http.ResponseWriter&lt;/code&gt; has internal member variables that are pointers to socket I&amp;rsquo;d be writing a response to.&lt;/p&gt;
 
-&lt;p&gt;It turns out that the answer lies somewhere in between. Enter Go&amp;rsquo;s &lt;code&gt;Interface&lt;/code&gt; type. The &lt;a href=&#34;https://golang.org/pkg/net/http/&#34; title=&#34;Cool Link&#34;&gt;&lt;code&gt;http.ResponseWriter&lt;/code&gt;&lt;/a&gt; an instance of an interface. There&amp;rsquo;s no shortage of blogs describing Interfaces, and the respective styles for explaining them differ signifcantly, but here is a rundown that makes sense to me:&lt;/p&gt;
+&lt;p&gt;It turns out that the answer lies somewhere in between. Enter Go&amp;rsquo;s &lt;code&gt;Interface&lt;/code&gt; type. The &lt;a href=&#34;https://golang.org/pkg/net/http/&#34; title=&#34;Cool Link&#34;&gt;&lt;code&gt;http.ResponseWriter&lt;/code&gt;&lt;/a&gt; an instance of an interface. There&amp;rsquo;s no shortage of blogs describing Interfaces, and the respective styles for explaining them differ significantly, but here is a rundown that makes sense to me:&lt;/p&gt;
 
-&lt;p&gt;A Go Interface is a value type that holds two pointers: one to a value, and the other to a type descripton. That&amp;rsquo;s it.&lt;/p&gt;
+&lt;p&gt;A Go Interface is a value type that holds two pointers: one to a value, and the other to a type description. That&amp;rsquo;s it.&lt;/p&gt;
 
-&lt;p&gt;But there are multiple interface types in Go, and certainly &lt;code&gt;http.ResponseWriter&lt;/code&gt; isn&amp;rsquo;t the only one. Very true, and you too can make infinite interface type declarations yourself. So, how do we come up with making the disctintion in method signatures? Isn&amp;rsquo;t Go a staticly typed language? &lt;em&gt;Yes&lt;/em&gt;, Go is definitely staticly typed, and Interfaces adhere to that strong type system by way of their respective method sets. Interface A is different from interface B because of it&amp;rsquo;s underlying value&amp;rsquo;s methods. &lt;em&gt;Put differently&lt;/em&gt;, an interface is defined by the method declarations that it&amp;rsquo;s type posesses.&lt;/p&gt;
+&lt;p&gt;But there are multiple interface types in Go, and certainly &lt;code&gt;http.ResponseWriter&lt;/code&gt; isn&amp;rsquo;t the only one. Very true, and you too can make infinite interface type declarations yourself. So, how do we come up with making the distinction in method signatures? Isn&amp;rsquo;t Go a statically typed language? &lt;em&gt;Yes&lt;/em&gt;, Go is definitely statically typed, and Interfaces adhere to that strong type system by way of their respective method sets. Interface A is different from interface B because of it&amp;rsquo;s underlying value&amp;rsquo;s methods. &lt;em&gt;Put differently&lt;/em&gt;, an interface is defined by the method declarations that it&amp;rsquo;s type possesses.&lt;/p&gt;
 
-&lt;p&gt;Before we continure, it&amp;rsquo;s worth mentioning here that an inteface does &lt;em&gt;NOT&lt;/em&gt; make any disctintions based on it&amp;rsquo;s underlying type&amp;rsquo;s properties, or member variables.&lt;/p&gt;
+&lt;p&gt;Before we continue, it&amp;rsquo;s worth mentioning here that an interface does &lt;em&gt;NOT&lt;/em&gt; make any distinctions based on it&amp;rsquo;s underlying type&amp;rsquo;s properties, or member variables.&lt;/p&gt;
 
-&lt;p&gt;When you declare that you accept an interface in Go, such as &lt;code&gt;http.ResponseWriter&lt;/code&gt; in our &lt;code&gt;handler&lt;/code&gt; call, you are saying that you don&amp;rsquo;t care what is being passed in, so long as it has the ability to do certain thing via its method set. Swift, Objecitve-C, Java, and many more languages have their notion of this type of protocol based programming model, but what makes Go distinct in this duck typing paradigm is that interfaces are a seperate type, they are NOT merely a abstract declaration used to faciltate polymorphism.&lt;/p&gt;
+&lt;p&gt;When you declare that you accept an interface in Go, such as &lt;code&gt;http.ResponseWriter&lt;/code&gt; in our &lt;code&gt;handler&lt;/code&gt; call, you are saying that you don&amp;rsquo;t care what is being passed in, so long as it has the ability to do certain thing via its method set. Swift, Objective-C, Java, and many more languages have their notion of this type of protocol based programming model, but what makes Go distinct in this duck typing paradigm is that interfaces are a separate type, they are NOT merely a abstract declaration used to facilitate polymorphism.&lt;/p&gt;
 
 &lt;p&gt;To make the previous point more clear, let&amp;rsquo;s say you declare the following protocol in swift and want to write a little greeting program:&lt;/p&gt;
 
@@ -294,7 +346,7 @@
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;In &lt;code&gt;introdceYourself&lt;/code&gt;, swift doesn&amp;rsquo;t who&amp;rsquo;s coming through as the &lt;code&gt;stranger&lt;/code&gt; variable, so long as it&amp;rsquo;s type declares its conformance to the Greetable protocol. Both the class and struct have declarations that they conform to the &lt;code&gt;Greetable&lt;/code&gt; protocol, and the compiler enforces this adherence. Inside &lt;code&gt;introdceYourself&lt;/code&gt;, you aren&amp;rsquo;t sure whether you&amp;rsquo;re dealing with a value type, or a refernce type. All you know is that stranger possess the ability to say &lt;code&gt;hello&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;In &lt;code&gt;introdceYourself&lt;/code&gt;, swift doesn&amp;rsquo;t who&amp;rsquo;s coming through as the &lt;code&gt;stranger&lt;/code&gt; variable, so long as it&amp;rsquo;s type declares its conformance to the Greetable protocol. Both the class and struct have declarations that they conform to the &lt;code&gt;Greetable&lt;/code&gt; protocol, and the compiler enforces this adherence. Inside &lt;code&gt;introdceYourself&lt;/code&gt;, you aren&amp;rsquo;t sure whether you&amp;rsquo;re dealing with a value type, or a reference type. All you know is that stranger possess the ability to say &lt;code&gt;hello&lt;/code&gt;.&lt;/p&gt;
 
 &lt;p&gt;Now, let&amp;rsquo;s see the same program in go:&lt;/p&gt;
 
@@ -319,13 +371,13 @@
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;The difference here is that inside &lt;code&gt;introduceYourself&lt;/code&gt;, we are not receiving an instance, or copy of GoSalutation, rather we receive an an interface type &lt;code&gt;Greetable&lt;/code&gt;. When we pass the instance of &lt;code&gt;GoSalutation&lt;/code&gt;, it is being automatically boxed up for us into an interface type. It&amp;rsquo;s a compile time safety check that determines whether or not can satisfy &lt;code&gt;Greetable&lt;/code&gt;, it&amp;rsquo;s &lt;em&gt;NOT&lt;/em&gt; due to whether &lt;code&gt;GoSalutation&lt;/code&gt; explictly declares some type of conformance. Also, there&amp;rsquo;s is no question whether we are dealing with a reference type or a value type any longer, we simply know that this the underlying, or &lt;code&gt;dynamic type&lt;/code&gt;, of the Greetable parameter posesses the ability to say &lt;code&gt;hello()&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;The difference here is that inside &lt;code&gt;introduceYourself&lt;/code&gt;, we are not receiving an instance, or copy of GoSalutation, rather we receive an an interface type &lt;code&gt;Greetable&lt;/code&gt;. When we pass the instance of &lt;code&gt;GoSalutation&lt;/code&gt;, it is being automatically boxed up for us into an interface type. It&amp;rsquo;s a compile time safety check that determines whether or not can satisfy &lt;code&gt;Greetable&lt;/code&gt;, it&amp;rsquo;s &lt;em&gt;NOT&lt;/em&gt; due to whether &lt;code&gt;GoSalutation&lt;/code&gt; explicitly declares some type of conformance. Also, there&amp;rsquo;s is no question whether we are dealing with a reference type or a value type any longer, we simply know that this the underlying, or &lt;code&gt;dynamic type&lt;/code&gt;, of the Greetable parameter possesses the ability to say &lt;code&gt;hello()&lt;/code&gt;.&lt;/p&gt;
 
-&lt;p&gt;I&amp;rsquo;m not advocating Go&amp;rsquo;s approach to protocol based programming over swift&amp;rsquo;s, or any other languages, I&amp;rsquo;m just using this example to draw the disctintion, and to illustrate what is really happening when you pass types to methods that accept interfaces.&lt;/p&gt;
+&lt;p&gt;I&amp;rsquo;m not advocating Go&amp;rsquo;s approach to protocol based programming over swift&amp;rsquo;s, or any other languages, I&amp;rsquo;m just using this example to draw the distinction, and to illustrate what is really happening when you pass types to methods that accept interfaces.&lt;/p&gt;
 
 &lt;h1 id=&#34;back-to-the-interface:afbad28d37502113e21a129455d477f1&#34;&gt;Back to the Interface&lt;/h1&gt;
 
-&lt;p&gt;So, now knowing that an interface is simply a some value type that points to some other types that posses certain method declarations, how does this influence how we understand what is going on with &lt;code&gt;http.responseWriter&lt;/code&gt;? Let&amp;rsquo;s look at what the &lt;code&gt;http.responseWriter&lt;/code&gt; interace actually declares:&lt;/p&gt;
+&lt;p&gt;So, now knowing that an interface is simply a some value type that points to some other types that posses certain method declarations, how does this influence how we understand what is going on with &lt;code&gt;http.responseWriter&lt;/code&gt;? Let&amp;rsquo;s look at what the &lt;code&gt;http.responseWriter&lt;/code&gt; interface actually declares:&lt;/p&gt;
 
 &lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;type&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;ResponseWriter&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;interface&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
         &lt;span style=&#34;color: #a6e22e&#34;&gt;Header&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;()&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;Header&lt;/span&gt;
@@ -337,7 +389,7 @@
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;Suprisingly thin - huh? But that&amp;rsquo;s kinda cool. When we decalre that a method accepts a &lt;code&gt;http.responseWriter&lt;/code&gt; of type interface, all we&amp;rsquo;re saying is that you can call three distinct methods on the underlying dynamic value, and that the underlying type is of no concern to you.&lt;/p&gt;
+&lt;p&gt;Surprisingly thin - huh? But that&amp;rsquo;s kinda cool. When we declare that a method accepts a &lt;code&gt;http.responseWriter&lt;/code&gt; of type interface, all we&amp;rsquo;re saying is that you can call three distinct methods on the underlying dynamic value, and that the underlying type is of no concern to you.&lt;/p&gt;
 </description>
     </item>
     

@@ -6,8 +6,60 @@
     <description>Recent content in Ios on Taylor Halliday</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 25 Feb 2016 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 06 Mar 2016 00:00:00 +0000</lastBuildDate>
     <atom:link href="http://tayhalla.github.io/blog/tags/ios/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Managing ENVs In XCode</title>
+      <link>http://tayhalla.github.io/blog/post/envsInXCode/</link>
+      <pubDate>Sun, 06 Mar 2016 00:00:00 +0000</pubDate>
+      
+      <guid>http://tayhalla.github.io/blog/post/envsInXCode/</guid>
+      <description>
+
+&lt;p&gt;This post is a small one about work flow in XCode. There&amp;rsquo;s no explicit way to have XCode set ENVs for you. When I started working with the IDE, I would simply comment or uncomment certain sections of code based on the ENV I was trying to target.&lt;/p&gt;
+
+&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;class&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;MyAppAPI&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+    &lt;span style=&#34;color: #66d9ef&#34;&gt;static&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;var&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;debug:&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;Bool&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;true&lt;/span&gt;
+    &lt;span style=&#34;color: #66d9ef&#34;&gt;static&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;var&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;baseURL:&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;String&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+        &lt;span style=&#34;color: #66d9ef&#34;&gt;get&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+            &lt;span style=&#34;color: #66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;debug&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+                &lt;span style=&#34;color: #66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;http://debug.someAPI.com&amp;quot;&lt;/span&gt;
+            &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;else&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+                &lt;span style=&#34;color: #66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;http://someAPI.com&amp;quot;&lt;/span&gt;
+            &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+        &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+    &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;As your application grows though, this kind of code can pop up in multiple classes. You could deal with it by making a central config class/stuct, but the idea of continually changing a single variable in the code that would drastically change behavior felt like an unsafe thing to do. Also, I would like to know the context of the code I&amp;rsquo;m looking at without having to navigate back and forth between a config file to see what environment I am operating under.&lt;/p&gt;
+
+&lt;h1 id=&#34;xcode-schemes:06b4a5a12e9d1f0703fe2b52d22ccedd&#34;&gt;XCode Schemes&lt;/h1&gt;
+
+&lt;p&gt;Xcode has a nice little drop down selector next to the device your targeting. It&amp;rsquo;s called the Scheme Selector:&lt;/p&gt;
+
+
+&lt;figure &gt;
+    
+        &lt;img src=&#34;http://tayhalla.github.io/blog/blog/media/scheme-selector.gif&#34; /&gt;
+    
+    
+&lt;/figure&gt;
+
+
+&lt;p&gt;Per the &lt;a href=&#34;https://developer.apple.com/library/ios/featuredarticles/XcodeConcepts/Concept-Schemes.html&#34; title=&#34;Boring Apple Docs&#34;&gt;XCode Docs&lt;/a&gt;, here&amp;rsquo;s what they have to say about what a scheme selector is used for:&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;An Xcode scheme defines a collection of targets to build, a configuration to use when building, and a collection of tests to execute.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Ok, sounds like this little drop down might have something to do with what we want. But, how do we select this configuration? Or, how do we configure the &lt;code&gt;Configuration&lt;/code&gt; to our liking?&lt;/p&gt;
+
+&lt;p&gt;Turns out they&amp;rsquo;re not using the term &amp;lsquo;Configuration&amp;rsquo; colloquially  - XCode has something call &amp;lsquo;XCode Configurations&amp;rsquo;&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>CADisplayLink and Maps</title>
@@ -79,7 +131,7 @@
 &lt;p&gt;A CADisplayLink object is a timer object that allows your application to synchronize its drawing to the refresh rate of the display. Your application creates a new display link, providing a target object and a selector to be called when the screen is updated&lt;/p&gt;
 &lt;/blockquote&gt;
 
-&lt;p&gt;Sounds like just what we need. The API for &lt;code&gt;CADisplayLink&lt;/code&gt; is pretty similiar to NSTimer. You alloc/init an instance, assign is to a runloop, give it a target and selector, and you have a callback that occurs whenever a redraw is about to happen on the screen.&lt;/p&gt;
+&lt;p&gt;Sounds like just what we need. The API for &lt;code&gt;CADisplayLink&lt;/code&gt; is pretty similar to NSTimer. You alloc/init an instance, assign is to a runloop, give it a target and selector, and you have a callback that occurs whenever a redraw is about to happen on the screen.&lt;/p&gt;
 
 &lt;p&gt;Here&amp;rsquo;s the code:&lt;/p&gt;
 
@@ -123,13 +175,13 @@
 
 &lt;h1 id=&#34;pop-and-other-animation-frameworks:48e3a9cef42133d4e3a0accdf42773f4&#34;&gt;POP and Other Animation Frameworks&lt;/h1&gt;
 
-&lt;p&gt;CADisplayLink is actually the key to any animation framework. An animation on the screen is simply displaying the interpolation of values over the screen. The only thing that makes POP and other animations a bit more complicated is the concept of timing curves - the of the change in animateable values over the change in time. With the &lt;code&gt;[UIView animate...]&lt;/code&gt; functions, you may recegnize them as the &lt;code&gt;UIViewAnimationCurve&lt;/code&gt; enum. They define whether the animaiton will proceed in a linear fashion, or if it will speed up and/or slow down at certain points in the process.&lt;/p&gt;
+&lt;p&gt;CADisplayLink is actually the key to any animation framework. An animation on the screen is simply displaying the interpolation of values over the screen. The only thing that makes POP and other animations a bit more complicated is the concept of timing curves - the rate of the change in animateable values over the change in time. With the &lt;code&gt;[UIView animate...]&lt;/code&gt; functions, you may recognize them as the &lt;code&gt;UIViewAnimationCurve&lt;/code&gt; enum. They define whether the animation will proceed in a linear fashion, or if it will speed up and/or slow down at certain points in the process.&lt;/p&gt;
 
-&lt;p&gt;For instance though, if you look at POP&amp;rsquo;s root animtor class, you will find it &lt;a href=&#34;https://github.com/facebook/pop/blob/master/pop/POPAnimator.mm#L347&#34;&gt;hooking up a CADiaplyLink in the init&lt;/a&gt;, and it&amp;rsquo;s callback is the &lt;a href=&#34;https://github.com/facebook/pop/blob/master/pop/POPAnimator.mm#L425&#34;&gt;core render method in the animation&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;For instance though, if you look at POP&amp;rsquo;s root animator class, you will find it &lt;a href=&#34;https://github.com/facebook/pop/blob/master/pop/POPAnimator.mm#L347&#34;&gt;hooking up a CADiaplyLink in the init&lt;/a&gt;, and it&amp;rsquo;s callback is the &lt;a href=&#34;https://github.com/facebook/pop/blob/master/pop/POPAnimator.mm#L425&#34;&gt;core render method in the animation&lt;/a&gt;.&lt;/p&gt;
 
 &lt;h1 id=&#34;a-note-on-interpolation:48e3a9cef42133d4e3a0accdf42773f4&#34;&gt;A Note On Interpolation&lt;/h1&gt;
 
-&lt;p&gt;In the previous section on animating a polyline, I oversimplified the process a bit. While you can simply interpolate between lat/lng pairs relative to the total distance in polyline, you need to be sure you&amp;rsquo;re hitting all of the original points provided to the polyline. This means that whenever you receive a callback to come up with a new point to put on screen, you need to check to make sure that all of the original control points (ends/beginings of the lines) were laid out where they needed to be. In order to do that, we need to preprocess the line to figure out each control pairs&amp;rsquo; position in our longer collection of interpolated points. Here is the code to preprocess the interpolation:&lt;/p&gt;
+&lt;p&gt;In the previous section on animating a polyline, I oversimplified the process a bit. While you can simply interpolate between lat/lng pairs relative to the total distance in polyline, you need to be sure you&amp;rsquo;re hitting all of the original points provided to the polyline. This means that whenever you receive a callback to come up with a new point to put on screen, you need to check to make sure that all of the original control points (ends/beginnings of the lines) were laid out where they needed to be. In order to do that, we need to preprocess the line to figure out each control pairs&amp;rsquo; position in our longer collection of interpolated points. Here is the code to preprocess the interpolation:&lt;/p&gt;
 
 &lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #75715e&#34;&gt;// *** Create the polyline route ***&lt;/span&gt;
 &lt;span style=&#34;color: #66d9ef&#34;&gt;unsigned&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;int&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;polylineCount&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;int&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)self.locations.count;&lt;/span&gt;

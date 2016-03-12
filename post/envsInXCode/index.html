@@ -1,0 +1,138 @@
+    <!DOCTYPE html>
+<html lang="en-us">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="author" content="Taylor Halliday">
+		<meta name="description" content="SF / SEA. Programming and everything else">
+		<meta name="generator" content="Hugo 0.15-DEV" />
+		<title>Managing ENVs In XCode &middot; Taylor Halliday</title>
+		<link rel="shortcut icon" href="http://tayhalla.github.io/blog/images/favicon.ico">
+		<link rel="stylesheet" href="http://tayhalla.github.io/blog/css/style.css">
+		<link rel="stylesheet" href="http://tayhalla.github.io/blog/css/highlight.css">
+		<link rel="stylesheet" href="http://tayhalla.github.io/blog/css/overrides.css">
+		<link href="http://tayhalla.github.io/blog/index.xml" rel="alternate" type="application/rss+xml" title="Taylor Halliday" />
+	</head>
+	</head>
+    <body>
+       <nav class="main-nav">
+</nav>
+
+        <section id="wrapper">
+            <article class="post">
+                <header>
+                    <h1>Managing ENVs In XCode</h1>
+                    <h2 class="headline">March 6, 2016</h2>
+                </header>
+                <section id="post-body">
+                    
+
+<p>This post is a small one about work flow in XCode. There&rsquo;s no explicit way to have XCode set ENVs for you. When I started working with the IDE, I would simply comment or uncomment certain sections of code based on the ENV I was trying to target.</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">class</span> <span style="color: #a6e22e">MyAppAPI</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #66d9ef">static</span> <span style="color: #66d9ef">var</span> <span style="color: #f8f8f2">debug:</span> <span style="color: #f8f8f2">Bool</span> <span style="color: #f8f8f2">=</span> <span style="color: #66d9ef">true</span>
+    <span style="color: #66d9ef">static</span> <span style="color: #66d9ef">var</span> <span style="color: #f8f8f2">baseURL:</span> <span style="color: #f8f8f2">String</span> <span style="color: #f8f8f2">{</span>
+        <span style="color: #66d9ef">get</span> <span style="color: #f8f8f2">{</span>
+            <span style="color: #66d9ef">if</span> <span style="color: #f8f8f2">debug</span> <span style="color: #f8f8f2">{</span>
+                <span style="color: #66d9ef">return</span> <span style="color: #e6db74">&quot;http://debug.someAPI.com&quot;</span>
+            <span style="color: #f8f8f2">}</span> <span style="color: #66d9ef">else</span> <span style="color: #f8f8f2">{</span>
+                <span style="color: #66d9ef">return</span> <span style="color: #e6db74">&quot;http://someAPI.com&quot;</span>
+            <span style="color: #f8f8f2">}</span>
+        <span style="color: #f8f8f2">}</span>
+    <span style="color: #f8f8f2">}</span>
+<span style="color: #f8f8f2">}</span>
+</pre></div>
+
+
+<p>As your application grows though, this kind of code can pop up in multiple classes. You could deal with it by making a central config class/stuct, but the idea of continually changing a single variable in the code that would drastically change behavior felt like an unsafe thing to do. Also, I would like to know the context of the code I&rsquo;m looking at without having to navigate back and forth between a config file to see what environment I am operating under.</p>
+
+<h1 id="xcode-schemes:06b4a5a12e9d1f0703fe2b52d22ccedd">XCode Schemes</h1>
+
+<p>Xcode has a nice little drop down selector next to the device your targeting. It&rsquo;s called the Scheme Selector:</p>
+
+
+<figure >
+    
+        <img src="/blog/media/scheme-selector.gif" />
+    
+    
+</figure>
+
+
+<p>Per the <a href="https://developer.apple.com/library/ios/featuredarticles/XcodeConcepts/Concept-Schemes.html" title="Boring Apple Docs">XCode Docs</a>, here&rsquo;s what they have to say about what a scheme selector is used for:</p>
+
+<blockquote>
+<p>An Xcode scheme defines a collection of targets to build, a configuration to use when building, and a collection of tests to execute.</p>
+</blockquote>
+
+<p>Ok, sounds like this little drop down might have something to do with what we want. But, how do we select this configuration? Or, how do we configure the <code>Configuration</code> to our liking?</p>
+
+<p>Turns out they&rsquo;re not using the term &lsquo;Configuration&rsquo; colloquially  - XCode has something call &lsquo;XCode Configurations&rsquo;</p>
+
+                </section>
+            </article>
+            <footer id="post-meta" class="clearfix">
+                <a href="https://twitter.com/@tayhalliday">
+                        <img class="avatar" src="http://tayhalla.github.io/blog/images/avatar.png">
+                        <div>
+                            <span class="dark">Taylor Halliday</span>
+                            <span></span>
+                        </div>
+                    </a>
+                <section id="sharing">
+                    <a class="twitter" href="https://twitter.com/intent/tweet?text=http%3a%2f%2ftayhalla.github.io%2fblog%2fpost%2fenvsInXCode%2f - Managing%20ENVs%20In%20XCode by @%40tayhalliday"><span class="icon-twitter"> Tweet</span></a>
+
+<a class="facebook" href="#" onclick="
+    window.open(
+      'https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(location.href),
+      'facebook-share-dialog',
+      'width=626,height=436');
+    return false;"><span class="icon-facebook-rect"> Share</span>
+</a>
+
+                </section>
+            </footer>
+
+            
+                <section class="disqus">
+    
+</section>
+            
+
+            <ul id="post-list" class="archive readmore">
+    <h3>Read more</h3>
+    
+    
+        
+   
+    
+        
+        <li>
+            <a href="http://tayhalla.github.io/blog/post/caDisplayLink/">CADisplayLink and Maps<aside class="dates">Feb 25</aside></a>
+        </li>
+        
+   
+    
+        
+        <li>
+            <a href="http://tayhalla.github.io/blog/post/interfacesInGo/">Interfaces in Go<aside class="dates">Jan 25</aside></a>
+        </li>
+        
+   
+</ul>
+            <footer id="footer">
+    <p class="small">
+        © Copyright 2016 Taylor Halliday
+    </p>
+</footer>
+        </section>
+
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="http://tayhalla.github.io/blog/js/main.js"></script>
+<script src="http://tayhalla.github.io/blog/js/highlight.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+    </body>
+</html>
