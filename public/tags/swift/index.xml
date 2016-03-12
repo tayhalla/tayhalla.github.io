@@ -10,7 +10,7 @@
     <atom:link href="http://tayhalla.github.io/blog/tags/swift/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
-      <title>Managing ENVs In XCode</title>
+      <title>Managing ENVs In XCode With Schemes</title>
       <link>http://tayhalla.github.io/blog/post/envsInXCode/</link>
       <pubDate>Sun, 06 Mar 2016 00:00:00 +0000</pubDate>
       
@@ -41,9 +41,9 @@
 &lt;p&gt;Xcode has a nice little drop down selector next to the device your targeting. It&amp;rsquo;s called the Scheme Selector:&lt;/p&gt;
 
 
-&lt;figure &gt;
+&lt;figure class=&#34;blog-img&#34;&gt;
     
-        &lt;img src=&#34;http://tayhalla.github.io/blog/blog/media/scheme-selector.gif&#34; /&gt;
+        &lt;img src=&#34;http://tayhalla.github.io/blog/blog/media/scheme_selector.png&#34; /&gt;
     
     
 &lt;/figure&gt;
@@ -55,9 +55,105 @@
 &lt;p&gt;An Xcode scheme defines a collection of targets to build, a configuration to use when building, and a collection of tests to execute.&lt;/p&gt;
 &lt;/blockquote&gt;
 
-&lt;p&gt;Ok, sounds like this little drop down might have something to do with what we want. But, how do we select this configuration? Or, how do we configure the &lt;code&gt;Configuration&lt;/code&gt; to our liking?&lt;/p&gt;
+&lt;p&gt;Ok, sounds like this little drop down might have something to do with what we want. But, how do we configure the &lt;code&gt;Configuration&lt;/code&gt; to our liking?&lt;/p&gt;
 
-&lt;p&gt;Turns out they&amp;rsquo;re not using the term &amp;lsquo;Configuration&amp;rsquo; colloquially  - XCode has something call &amp;lsquo;XCode Configurations&amp;rsquo;&lt;/p&gt;
+&lt;h1 id=&#34;xcode-configurations:06b4a5a12e9d1f0703fe2b52d22ccedd&#34;&gt;XCode Configurations&lt;/h1&gt;
+
+&lt;p&gt;Turns out they&amp;rsquo;re not using the term &amp;lsquo;Configuration&amp;rsquo; colloquially - XCode has something call &amp;lsquo;XCode Configurations&amp;rsquo;. You can mange them here:&lt;/p&gt;
+
+
+&lt;figure class=&#34;blog-img&#34;&gt;
+    
+        &lt;img src=&#34;http://tayhalla.github.io/blog/blog/media/xcode_configs.jpg&#34; /&gt;
+    
+    
+&lt;/figure&gt;
+
+
+&lt;p&gt;While we&amp;rsquo;re here, let&amp;rsquo;s create a new configuration. We&amp;rsquo;ll call it &lt;code&gt;Production&lt;/code&gt; and it should be very similar to our current &lt;code&gt;Debug&lt;/code&gt; configuration. To do this, just find the &lt;code&gt;+&lt;/code&gt; button on the bottom left below the existing configurations, and click &lt;code&gt;Duplicate &amp;quot;Debug&amp;quot; Configuration&lt;/code&gt;. You should now have 3 configurations:&lt;/p&gt;
+
+
+&lt;figure class=&#34;blog-img&#34;&gt;
+    
+        &lt;img src=&#34;http://tayhalla.github.io/blog/blog/media/three_configs.jpg&#34; /&gt;
+    
+    
+&lt;/figure&gt;
+
+
+&lt;h1 id=&#34;scheme-editor:06b4a5a12e9d1f0703fe2b52d22ccedd&#34;&gt;Scheme Editor&lt;/h1&gt;
+
+&lt;p&gt;Configurations in XCode define the environment in which your code is running. The two there &lt;code&gt;Release&lt;/code&gt; and &lt;code&gt;Debug&lt;/code&gt; come for free out of the box, and are both used by your one existing scheme. To see how they are used by the default scheme, go to the scheme drop down, click it, then go to &lt;code&gt;Edit Scheme&lt;/code&gt;.&lt;/p&gt;
+
+
+&lt;figure class=&#34;blog-img&#34;&gt;
+    
+        &lt;img src=&#34;http://tayhalla.github.io/blog/blog/media/edit_scheme.jpg&#34; /&gt;
+    
+    
+&lt;/figure&gt;
+
+
+&lt;p&gt;That will bring up the &lt;code&gt;Scheme Editor&lt;/code&gt; which then shows the settings for your current scheme. The thing we want to notice here is the subtext on the left, below the six titles (Build, Run, Text, etc.). Each of them specifies one of the configurations we saw earlier. The configuration is the context for the operation you&amp;rsquo;re performing with your project. So, if you hit &lt;code&gt;Run&lt;/code&gt; and you load your in the simulator or a device, our current scheme will use the &lt;code&gt;Debug&lt;/code&gt; configuration. But, if you wanted to archive your app for distribution, we can see that the &lt;code&gt;Archive&lt;/code&gt; action uses the &lt;code&gt;Release&lt;/code&gt; configuration.&lt;/p&gt;
+
+
+&lt;figure class=&#34;blog-img&#34;&gt;
+    
+        &lt;img src=&#34;http://tayhalla.github.io/blog/blog/media/build_configs.jpg&#34; /&gt;
+    
+    
+&lt;/figure&gt;
+
+
+&lt;p&gt;Next let&amp;rsquo;s make another scheme so that we can clearly tell when the project is using our development ENV vars vs production ENV vars. First, let&amp;rsquo;s hit &amp;lsquo;Duplicate Scheme&amp;rsquo; in the lower left, then that will create a copy of the previous configuration and it will ask us for a name. Let&amp;rsquo;s use this to make our development environment, so let&amp;rsquo;s call it &lt;code&gt;AwesomeProject Development&lt;/code&gt;. While we&amp;rsquo;re here, let&amp;rsquo;s change our archive command for this to use &lt;code&gt;Debug&lt;/code&gt; so that when we distribute a development build, it&amp;rsquo;s using our Development ENVs.&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;Not to jump ahead, but the caveat with using our &lt;code&gt;Debug&lt;/code&gt; configuration here is that there&amp;rsquo;s a bunch of non-optimized XCode build settings that will ship with these archives. If you want to ship builds that are using optimized configurations, you should create a fourth configuration - call it &lt;code&gt;Staging&lt;/code&gt; that is duplicated from the &lt;code&gt;Release&lt;/code&gt; configuration, and assign the &lt;code&gt;Archive&lt;/code&gt; action to that configuration here.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Now, let&amp;rsquo;s go back to our other configuration and we&amp;rsquo;ll rename it to &lt;code&gt;AwesomeProject Production&lt;/code&gt; and leave it alone.&lt;/p&gt;
+
+
+&lt;figure class=&#34;blog-img&#34;&gt;
+    
+        &lt;img src=&#34;http://tayhalla.github.io/blog/blog/media/Edit_scheme_name.jpg&#34; /&gt;
+    
+    
+&lt;/figure&gt;
+
+
+&lt;h1 id=&#34;preprocessor-macros-n-build-settings:06b4a5a12e9d1f0703fe2b52d22ccedd&#34;&gt;Preprocessor Macros n&amp;rsquo; Build Settings&lt;/h1&gt;
+
+&lt;p&gt;Next, we&amp;rsquo;re going to assign a preprocessor macro to a a specific environment. If you&amp;rsquo;re not familiar with Preprocessor Macros, you can think of them as a sort of global flag your compiler can inject. Head over to your Build Settings in your project navigator, search for &lt;code&gt;Preprocessor Marcros&lt;/code&gt;, and open up the selection that is shown. If you expand the line item, you&amp;rsquo;ll see our configurations we saw earlier. Double click the green shaded box with the current &lt;code&gt;DEBUG&lt;/code&gt; flag in there, and add another entry.&lt;/p&gt;
+
+&lt;h1 id=&#34;preprocessor-macros-n-code:06b4a5a12e9d1f0703fe2b52d22ccedd&#34;&gt;Preprocessor Macros n&amp;rsquo; Code&lt;/h1&gt;
+
+&lt;p&gt;Now that we&amp;rsquo;re all setup, let&amp;rsquo;s go to some actual code and make this configuration mess actually do something for us. The preprocessor macros we set can be picked up in code by using some &lt;a href=&#34;https://gcc.gnu.org/onlinedocs/cpp/Ifdef.html&#34; title=&#34;Boring gcc Docs&#34;&gt;slightly unfamiliar syntax&lt;/a&gt;:&lt;/p&gt;
+
+&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;static&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;var&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;baseURL:&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;String&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+    &lt;span style=&#34;color: #66d9ef&#34;&gt;get&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
+        &lt;span style=&#34;color: #66d9ef&#34;&gt;let&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;baseURL:&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;String&lt;/span&gt;
+        &lt;span style=&#34;color: #75715e&#34;&gt;#if&lt;/span&gt; &lt;span style=&#34;color: #75715e&#34;&gt;DEVELOPMENT&lt;/span&gt;
+            &lt;span style=&#34;color: #f8f8f2&#34;&gt;baseURL&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;http://debug.someAPI.com&amp;quot;&lt;/span&gt;
+        &lt;span style=&#34;color: #75715e&#34;&gt;#else&lt;/span&gt;
+            &lt;span style=&#34;color: #f8f8f2&#34;&gt;baseURL&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;http://someAPI.com&amp;quot;&lt;/span&gt;
+        &lt;span style=&#34;color: #75715e&#34;&gt;#endif&lt;/span&gt;
+        &lt;span style=&#34;color: #66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;baseURL&lt;/span&gt;
+    &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+&lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Now, all we have to do is select the appropriate scheme, and it will select the appropriate ENV var we want. You can use this to set things like URLs, but you can also use it to set a range of other things such as UI Defaults, build optimizations, testing configurations, and more.&lt;/p&gt;
+
+
+&lt;figure class=&#34;blog-img&#34;&gt;
+    
+        &lt;img src=&#34;http://tayhalla.github.io/blog/blog/media/two_configs.jpg&#34; /&gt;
+    
+    
+&lt;/figure&gt;
+
 </description>
     </item>
     
