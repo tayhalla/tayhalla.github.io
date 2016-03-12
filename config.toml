@@ -1,6 +1,7 @@
 # Site settings
 baseurl = "http://tayhalla.github.io/blog/"
 languageCode = "en-us"
+title="Taylor Halliday"
 
 [params]
 	name = "Taylor Halliday"
