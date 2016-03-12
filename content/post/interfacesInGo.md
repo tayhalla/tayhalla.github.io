@@ -12,7 +12,7 @@ Go's Pointers n' Interfaces
 The first thing I wanted to write in Go was a small app with some networking functionality. Luckily Go has *awesome* resources for getting going. I started with replicating the code from their own [Writing Web Applications](https://golang.org/doc/articles/wiki/ "Awesome Stuff"):
 
 https://golang.org/doc/articles/wiki/#tmp_3
-{{< highlight go "linenos=inline">}}
+{{< highlight go>}}
 // Main is the entry point for the program. 
 // Here, the we're calling on the http package to
 // listen on port 8080, and send all requests to the function 'handler'
