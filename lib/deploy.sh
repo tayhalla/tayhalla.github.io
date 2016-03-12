@@ -5,8 +5,6 @@ echo -e "\033[0;32mDeploying updates to GitHub...\033[0m"
 # Build the project.
 hugo -t cactus
 
-# Go To Public folder
-cd public
 # Add changes to git.
 git add -A
 
@@ -20,5 +18,5 @@ git commit -m "$msg"
 # Push source and build repos.
 git push origin master
 
-# Come Back
-cd ..
+# Push subtree
+git subtree push --prefix=public git@github.com:tayhalla/blog.git gh-pages
