@@ -2,9 +2,25 @@
 	max-width: 300px;
 	margin-left: auto;
 	margin-right: auto;
-	border-color: #bbb;
-	border-width: 2px;
 	border-radius: 5px;
-	border-style: solid;
 	margin-bottom: 20px;
+	border-width: 2px;
+	border-color: #ddd;
+	border-style: solid;;
 }
+
+.blog-img {
+	max-width: 30em;
+	margin-left: auto;
+	margin-right: auto;
+	border-radius: 5px;
+	margin-bottom: 20px;
+	border-width: 2px;
+	border-color: #ddd;
+	border-style: solid;
+}
+
+.highlight {
+	border-radius: 5px;
+}
+
