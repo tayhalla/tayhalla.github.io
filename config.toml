@@ -1,5 +1,5 @@
 # Site settings
-baseurl = "http://replace-this-with-your-domain.com/"
+baseurl = "http://tayhalla.github.io/blog/"
 languageCode = "en-us"
 
 [params]

@@ -2,19 +2,19 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Posts on </title>
-    <link>http://replace-this-with-your-domain.com/post/</link>
+    <link>http://tayhalla.github.io/blog/post/</link>
     <description>Recent content in Posts on </description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Thu, 25 Feb 2016 00:00:00 +0000</lastBuildDate>
-    <atom:link href="http://replace-this-with-your-domain.com/post/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://tayhalla.github.io/blog/post/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
       <title>CADisplayLink and Maps</title>
-      <link>http://replace-this-with-your-domain.com/post/caDisplayLink/</link>
+      <link>http://tayhalla.github.io/blog/post/caDisplayLink/</link>
       <pubDate>Thu, 25 Feb 2016 00:00:00 +0000</pubDate>
       
-      <guid>http://replace-this-with-your-domain.com/post/caDisplayLink/</guid>
+      <guid>http://tayhalla.github.io/blog/post/caDisplayLink/</guid>
       <description>
 
 &lt;p&gt;Ever been in the position where you need to animate something on screen but the property is not covered by [UIView animateWith&amp;hellip;]? Or maybe the thing you&amp;rsquo;re trying to animate is not part of the standard UIKit frameworks, and is instead some higher level UI piece built by a vendor. I ran into this not too long ago with Google Maps iOS SDK. My desire was to animate a polyline across the sceen, but there was no built in animate feature for the SDK. This is how I learned about making your own animations with CADisplayLink. A bit of background first though&amp;hellip;&lt;/p&gt;
@@ -53,7 +53,7 @@
 
 &lt;figure class=&#34;map-img&#34;&gt;
     
-        &lt;img src=&#34;http://replace-this-with-your-domain.com/media/polyline_complete.gif&#34; /&gt;
+        &lt;img src=&#34;http://tayhalla.github.io/blog/media/polyline_complete.gif&#34; /&gt;
     
     
 &lt;/figure&gt;
@@ -115,7 +115,7 @@
 
 &lt;figure class=&#34;map-img&#34;&gt;
     
-        &lt;img src=&#34;http://replace-this-with-your-domain.com/media/cadisplay_polyline.gif&#34; /&gt;
+        &lt;img src=&#34;http://tayhalla.github.io/blog/media/cadisplay_polyline.gif&#34; /&gt;
     
     
 &lt;/figure&gt;
@@ -228,10 +228,10 @@
     
     <item>
       <title>Interfaces in Go</title>
-      <link>http://replace-this-with-your-domain.com/post/interfacesInGo/</link>
+      <link>http://tayhalla.github.io/blog/post/interfacesInGo/</link>
       <pubDate>Mon, 25 Jan 2016 00:00:00 +0000</pubDate>
       
-      <guid>http://replace-this-with-your-domain.com/post/interfacesInGo/</guid>
+      <guid>http://tayhalla.github.io/blog/post/interfacesInGo/</guid>
       <description>
 
 &lt;p&gt;Go has been a interesting language for me to learn. I love how the language reminds me of writing in C, but it comes with the comfort of having some hardened core libs and memory managemnt baked in. One thing that struck me as odd about it though was the concept of interfaces.&lt;/p&gt;
