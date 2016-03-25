@@ -2,19 +2,19 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Ios on Taylor Halliday</title>
-    <link>http://tayhalla.github.io/blog/tags/ios/</link>
+    <link>http://tayhalla.github.io/tags/ios/</link>
     <description>Recent content in Ios on Taylor Halliday</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Sun, 06 Mar 2016 00:00:00 +0000</lastBuildDate>
-    <atom:link href="http://tayhalla.github.io/blog/tags/ios/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://tayhalla.github.io/tags/ios/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
       <title>Managing ENVs In XCode With Schemes</title>
-      <link>http://tayhalla.github.io/blog/post/envsInXCode/</link>
+      <link>http://tayhalla.github.io/post/envsInXCode/</link>
       <pubDate>Sun, 06 Mar 2016 00:00:00 +0000</pubDate>
       
-      <guid>http://tayhalla.github.io/blog/post/envsInXCode/</guid>
+      <guid>http://tayhalla.github.io/post/envsInXCode/</guid>
       <description>
 
 &lt;p&gt;This post is a small one about work flow in XCode. There&amp;rsquo;s no explicit way to have XCode set ENVs for you. When I started working with the IDE, I would simply comment or uncomment certain sections of code based on the ENV I was trying to target.&lt;/p&gt;
@@ -43,7 +43,7 @@
 
 &lt;figure class=&#34;blog-img&#34;&gt;
     
-        &lt;img src=&#34;http://tayhalla.github.io/blog/blog/media/scheme_selector.png&#34; /&gt;
+        &lt;img src=&#34;http://tayhalla.github.io/media/scheme_selector.png&#34; /&gt;
     
     
 &lt;/figure&gt;
@@ -64,7 +64,7 @@
 
 &lt;figure class=&#34;blog-img&#34;&gt;
     
-        &lt;img src=&#34;http://tayhalla.github.io/blog/blog/media/xcode_configs.jpg&#34; /&gt;
+        &lt;img src=&#34;http://tayhalla.github.io/media/xcode_configs.jpg&#34; /&gt;
     
     
 &lt;/figure&gt;
@@ -75,7 +75,7 @@
 
 &lt;figure class=&#34;blog-img&#34;&gt;
     
-        &lt;img src=&#34;http://tayhalla.github.io/blog/blog/media/three_configs.jpg&#34; /&gt;
+        &lt;img src=&#34;http://tayhalla.github.io/media/three_configs.jpg&#34; /&gt;
     
     
 &lt;/figure&gt;
@@ -88,7 +88,7 @@
 
 &lt;figure class=&#34;blog-img&#34;&gt;
     
-        &lt;img src=&#34;http://tayhalla.github.io/blog/blog/media/edit_scheme.jpg&#34; /&gt;
+        &lt;img src=&#34;http://tayhalla.github.io/media/edit_scheme.jpg&#34; /&gt;
     
     
 &lt;/figure&gt;
@@ -99,7 +99,7 @@
 
 &lt;figure class=&#34;blog-img&#34;&gt;
     
-        &lt;img src=&#34;http://tayhalla.github.io/blog/blog/media/build_configs.jpg&#34; /&gt;
+        &lt;img src=&#34;http://tayhalla.github.io/media/build_configs.jpg&#34; /&gt;
     
     
 &lt;/figure&gt;
@@ -116,7 +116,7 @@
 
 &lt;figure class=&#34;blog-img&#34;&gt;
     
-        &lt;img src=&#34;http://tayhalla.github.io/blog/blog/media/Edit_scheme_name.jpg&#34; /&gt;
+        &lt;img src=&#34;http://tayhalla.github.io/media/Edit_scheme_name.jpg&#34; /&gt;
     
     
 &lt;/figure&gt;
@@ -149,7 +149,7 @@
 
 &lt;figure class=&#34;blog-img&#34;&gt;
     
-        &lt;img src=&#34;http://tayhalla.github.io/blog/blog/media/two_configs.jpg&#34; /&gt;
+        &lt;img src=&#34;http://tayhalla.github.io/media/two_configs.jpg&#34; /&gt;
     
     
 &lt;/figure&gt;
@@ -159,10 +159,10 @@
     
     <item>
       <title>CADisplayLink and Maps</title>
-      <link>http://tayhalla.github.io/blog/post/caDisplayLink/</link>
+      <link>http://tayhalla.github.io/post/caDisplayLink/</link>
       <pubDate>Thu, 25 Feb 2016 00:00:00 +0000</pubDate>
       
-      <guid>http://tayhalla.github.io/blog/post/caDisplayLink/</guid>
+      <guid>http://tayhalla.github.io/post/caDisplayLink/</guid>
       <description>
 
 &lt;p&gt;Ever been in the position where you need to animate something on screen but the property is not covered by [UIView animateWith&amp;hellip;]? Or maybe the thing you&amp;rsquo;re trying to animate is not part of the standard UIKit frameworks, and is instead some higher level UI piece built by a vendor. I ran into this not too long ago with Google Maps iOS SDK. My desire was to animate a polyline across the sceen, but there was no built in animate feature for the SDK. This is how I learned about making your own animations with CADisplayLink. A bit of background first though&amp;hellip;&lt;/p&gt;
@@ -201,7 +201,7 @@
 
 &lt;figure class=&#34;map-img&#34;&gt;
     
-        &lt;img src=&#34;http://tayhalla.github.io/blog/blog/media/polyline_complete.gif&#34; /&gt;
+        &lt;img src=&#34;http://tayhalla.github.io/media/polyline_complete.gif&#34; /&gt;
     
     
 &lt;/figure&gt;
@@ -263,7 +263,7 @@
 
 &lt;figure class=&#34;map-img&#34;&gt;
     
-        &lt;img src=&#34;http://tayhalla.github.io/blog/blog/media/cadisplay_polyline.gif&#34; /&gt;
+        &lt;img src=&#34;http://tayhalla.github.io/media/cadisplay_polyline.gif&#34; /&gt;
     
     
 &lt;/figure&gt;
