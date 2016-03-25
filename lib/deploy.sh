@@ -19,4 +19,4 @@ git commit -m "$msg"
 git push origin master
 
 # Push subtree
-git subtree push --prefix=public git@github.com:tayhalla/blog.git gh-pages
+git subtree push --prefix=public git@github.com:tayhalla/tayhalla.github.io.git gh-pages
