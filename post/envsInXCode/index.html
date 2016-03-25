@@ -1,0 +1,234 @@
+    <!DOCTYPE html>
+<html lang="en-us">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="author" content="Taylor Halliday">
+		<meta name="description" content="SF / SEA. Programming and everything else">
+		<meta name="generator" content="Hugo 0.15-DEV" />
+		<title>Managing ENVs In XCode With Schemes &middot; Taylor Halliday</title>
+		<link rel="shortcut icon" href="http://tayhalla.github.ioimages/favicon.ico">
+		<link rel="stylesheet" href="http://tayhalla.github.iocss/style.css">
+		<link rel="stylesheet" href="http://tayhalla.github.iocss/highlight.css">
+		<link rel="stylesheet" href="http://tayhalla.github.iocss/overrides.css">
+		<link href="http://tayhalla.github.ioindex.xml" rel="alternate" type="application/rss+xml" title="Taylor Halliday" />
+	</head>
+	</head>
+    <body>
+       <nav class="main-nav">
+</nav>
+
+        <section id="wrapper">
+            <article class="post">
+                <header>
+                    <h1>Managing ENVs In XCode With Schemes</h1>
+                    <h2 class="headline">March 6, 2016</h2>
+                </header>
+                <section id="post-body">
+                    
+
+<p>This post is a small one about work flow in XCode. There&rsquo;s no explicit way to have XCode set ENVs for you. When I started working with the IDE, I would simply comment or uncomment certain sections of code based on the ENV I was trying to target.</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">class</span> <span style="color: #a6e22e">MyAppAPI</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #66d9ef">static</span> <span style="color: #66d9ef">var</span> <span style="color: #f8f8f2">debug:</span> <span style="color: #f8f8f2">Bool</span> <span style="color: #f8f8f2">=</span> <span style="color: #66d9ef">true</span>
+    <span style="color: #66d9ef">static</span> <span style="color: #66d9ef">var</span> <span style="color: #f8f8f2">baseURL:</span> <span style="color: #f8f8f2">String</span> <span style="color: #f8f8f2">{</span>
+        <span style="color: #66d9ef">get</span> <span style="color: #f8f8f2">{</span>
+            <span style="color: #66d9ef">if</span> <span style="color: #f8f8f2">debug</span> <span style="color: #f8f8f2">{</span>
+                <span style="color: #66d9ef">return</span> <span style="color: #e6db74">&quot;http://debug.someAPI.com&quot;</span>
+            <span style="color: #f8f8f2">}</span> <span style="color: #66d9ef">else</span> <span style="color: #f8f8f2">{</span>
+                <span style="color: #66d9ef">return</span> <span style="color: #e6db74">&quot;http://someAPI.com&quot;</span>
+            <span style="color: #f8f8f2">}</span>
+        <span style="color: #f8f8f2">}</span>
+    <span style="color: #f8f8f2">}</span>
+<span style="color: #f8f8f2">}</span>
+</pre></div>
+
+
+<p>As your application grows though, this kind of code can pop up in multiple classes. You could deal with it by making a central config class/stuct, but the idea of continually changing a single variable in the code that would drastically change behavior felt like an unsafe thing to do. Also, I would like to know the context of the code I&rsquo;m looking at without having to navigate back and forth between a config file to see what environment I am operating under.</p>
+
+<h1 id="xcode-schemes:06b4a5a12e9d1f0703fe2b52d22ccedd">XCode Schemes</h1>
+
+<p>Xcode has a nice little drop down selector next to the device your targeting. It&rsquo;s called the Scheme Selector:</p>
+
+
+<figure class="blog-img">
+    
+        <img src="/media/scheme_selector.png" />
+    
+    
+</figure>
+
+
+<p>Per the <a href="https://developer.apple.com/library/ios/featuredarticles/XcodeConcepts/Concept-Schemes.html" title="Boring Apple Docs">XCode Docs</a>, here&rsquo;s what they have to say about what a scheme selector is used for:</p>
+
+<blockquote>
+<p>An Xcode scheme defines a collection of targets to build, a configuration to use when building, and a collection of tests to execute.</p>
+</blockquote>
+
+<p>Ok, sounds like this little drop down might have something to do with what we want. But, how do we configure the <code>Configuration</code> to our liking?</p>
+
+<h1 id="xcode-configurations:06b4a5a12e9d1f0703fe2b52d22ccedd">XCode Configurations</h1>
+
+<p>Turns out they&rsquo;re not using the term &lsquo;Configuration&rsquo; colloquially - XCode has something call &lsquo;XCode Configurations&rsquo;. You can mange them here:</p>
+
+
+<figure class="blog-img">
+    
+        <img src="/media/xcode_configs.jpg" />
+    
+    
+</figure>
+
+
+<p>While we&rsquo;re here, let&rsquo;s create a new configuration. We&rsquo;ll call it <code>Production</code> and it should be very similar to our current <code>Debug</code> configuration. To do this, just find the <code>+</code> button on the bottom left below the existing configurations, and click <code>Duplicate &quot;Debug&quot; Configuration</code>. You should now have 3 configurations:</p>
+
+
+<figure class="blog-img">
+    
+        <img src="/media/three_configs.jpg" />
+    
+    
+</figure>
+
+
+<h1 id="scheme-editor:06b4a5a12e9d1f0703fe2b52d22ccedd">Scheme Editor</h1>
+
+<p>Configurations in XCode define the environment in which your code is running. The two there <code>Release</code> and <code>Debug</code> come for free out of the box, and are both used by your one existing scheme. To see how they are used by the default scheme, go to the scheme drop down, click it, then go to <code>Edit Scheme</code>.</p>
+
+
+<figure class="blog-img">
+    
+        <img src="/media/edit_scheme.jpg" />
+    
+    
+</figure>
+
+
+<p>That will bring up the <code>Scheme Editor</code> which then shows the settings for your current scheme. The thing we want to notice here is the subtext on the left, below the six titles (Build, Run, Text, etc.). Each of them specifies one of the configurations we saw earlier. The configuration is the context for the operation you&rsquo;re performing with your project. So, if you hit <code>Run</code> and you load your in the simulator or a device, our current scheme will use the <code>Debug</code> configuration. But, if you wanted to archive your app for distribution, we can see that the <code>Archive</code> action uses the <code>Release</code> configuration.</p>
+
+
+<figure class="blog-img">
+    
+        <img src="/media/build_configs.jpg" />
+    
+    
+</figure>
+
+
+<p>Next let&rsquo;s make another scheme so that we can clearly tell when the project is using our development ENV vars vs production ENV vars. First, let&rsquo;s hit &lsquo;Duplicate Scheme&rsquo; in the lower left, then that will create a copy of the previous configuration and it will ask us for a name. Let&rsquo;s use this to make our development environment, so let&rsquo;s call it <code>AwesomeProject Development</code>. While we&rsquo;re here, let&rsquo;s change our archive command for this to use <code>Debug</code> so that when we distribute a development build, it&rsquo;s using our Development ENVs.</p>
+
+<blockquote>
+<p>Not to jump ahead, but the caveat with using our <code>Debug</code> configuration here is that there&rsquo;s a bunch of non-optimized XCode build settings that will ship with these archives. If you want to ship builds that are using optimized configurations, you should create a fourth configuration - call it <code>Staging</code> that is duplicated from the <code>Release</code> configuration, and assign the <code>Archive</code> action to that configuration here.</p>
+</blockquote>
+
+<p>Now, let&rsquo;s go back to our other configuration and we&rsquo;ll rename it to <code>AwesomeProject Production</code> and leave it alone.</p>
+
+
+<figure class="blog-img">
+    
+        <img src="/media/Edit_scheme_name.jpg" />
+    
+    
+</figure>
+
+
+<h1 id="preprocessor-macros-n-build-settings:06b4a5a12e9d1f0703fe2b52d22ccedd">Preprocessor Macros n&rsquo; Build Settings</h1>
+
+<p>Next, we&rsquo;re going to assign a preprocessor macro to a a specific environment. If you&rsquo;re not familiar with Preprocessor Macros, you can think of them as a sort of global flag your compiler can inject. Head over to your Build Settings in your project navigator, search for <code>Preprocessor Marcros</code>, and open up the selection that is shown. If you expand the line item, you&rsquo;ll see our configurations we saw earlier. Double click the green shaded box with the current <code>DEBUG</code> flag in there, and add another entry.</p>
+
+<h1 id="preprocessor-macros-n-code:06b4a5a12e9d1f0703fe2b52d22ccedd">Preprocessor Macros n&rsquo; Code</h1>
+
+<p>Now that we&rsquo;re all setup, let&rsquo;s go to some actual code and make this configuration mess actually do something for us. The preprocessor macros we set can be picked up in code by using some <a href="https://gcc.gnu.org/onlinedocs/cpp/Ifdef.html" title="Boring gcc Docs">slightly unfamiliar syntax</a>:</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">static</span> <span style="color: #66d9ef">var</span> <span style="color: #f8f8f2">baseURL:</span> <span style="color: #f8f8f2">String</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #66d9ef">get</span> <span style="color: #f8f8f2">{</span>
+        <span style="color: #66d9ef">let</span> <span style="color: #f8f8f2">baseURL:</span> <span style="color: #f8f8f2">String</span>
+        <span style="color: #75715e">#if</span> <span style="color: #75715e">DEVELOPMENT</span>
+            <span style="color: #f8f8f2">baseURL</span> <span style="color: #f8f8f2">=</span> <span style="color: #e6db74">&quot;http://debug.someAPI.com&quot;</span>
+        <span style="color: #75715e">#else</span>
+            <span style="color: #f8f8f2">baseURL</span> <span style="color: #f8f8f2">=</span> <span style="color: #e6db74">&quot;http://someAPI.com&quot;</span>
+        <span style="color: #75715e">#endif</span>
+        <span style="color: #66d9ef">return</span> <span style="color: #f8f8f2">baseURL</span>
+    <span style="color: #f8f8f2">}</span>
+<span style="color: #f8f8f2">}</span>
+</pre></div>
+
+
+<p>Now, all we have to do is select the appropriate scheme, and it will select the appropriate ENV var we want. You can use this to set things like URLs, but you can also use it to set a range of other things such as UI Defaults, build optimizations, testing configurations, and more.</p>
+
+
+<figure class="blog-img">
+    
+        <img src="/media/two_configs.jpg" />
+    
+    
+</figure>
+
+
+                </section>
+            </article>
+            <footer id="post-meta" class="clearfix">
+                <a href="https://twitter.com/@tayhalliday">
+                        <img class="avatar" src="http://tayhalla.github.ioimages/avatar.png">
+                        <div>
+                            <span class="dark">Taylor Halliday</span>
+                            <span></span>
+                        </div>
+                    </a>
+                <section id="sharing">
+                    <a class="twitter" href="https://twitter.com/intent/tweet?text=http%3a%2f%2ftayhalla.github.io%2fpost%2fenvsInXCode%2f - Managing%20ENVs%20In%20XCode%20With%20Schemes by @%40tayhalliday"><span class="icon-twitter"> Tweet</span></a>
+
+<a class="facebook" href="#" onclick="
+    window.open(
+      'https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(location.href),
+      'facebook-share-dialog',
+      'width=626,height=436');
+    return false;"><span class="icon-facebook-rect"> Share</span>
+</a>
+
+                </section>
+            </footer>
+
+            
+                <section class="disqus">
+    
+</section>
+            
+
+            <ul id="post-list" class="archive readmore">
+    <h3>Read more</h3>
+    
+    
+        
+   
+    
+        
+        <li>
+            <a href="http://tayhalla.github.io/post/caDisplayLink/">CADisplayLink and Maps<aside class="dates">Feb 25</aside></a>
+        </li>
+        
+   
+    
+        
+        <li>
+            <a href="http://tayhalla.github.io/post/interfacesInGo/">Interfaces in Go<aside class="dates">Jan 25</aside></a>
+        </li>
+        
+   
+</ul>
+            <footer id="footer">
+    <p class="small">
+        © Copyright 2016 Taylor Halliday
+    </p>
+</footer>
+        </section>
+
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="http://tayhalla.github.iojs/main.js"></script>
+<script src="http://tayhalla.github.iojs/highlight.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+    </body>
+</html>

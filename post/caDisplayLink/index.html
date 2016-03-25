@@ -1,0 +1,303 @@
+    <!DOCTYPE html>
+<html lang="en-us">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="author" content="Taylor Halliday">
+		<meta name="description" content="SF / SEA. Programming and everything else">
+		<meta name="generator" content="Hugo 0.15-DEV" />
+		<title>CADisplayLink and Maps &middot; Taylor Halliday</title>
+		<link rel="shortcut icon" href="http://tayhalla.github.ioimages/favicon.ico">
+		<link rel="stylesheet" href="http://tayhalla.github.iocss/style.css">
+		<link rel="stylesheet" href="http://tayhalla.github.iocss/highlight.css">
+		<link rel="stylesheet" href="http://tayhalla.github.iocss/overrides.css">
+		<link href="http://tayhalla.github.ioindex.xml" rel="alternate" type="application/rss+xml" title="Taylor Halliday" />
+	</head>
+	</head>
+    <body>
+       <nav class="main-nav">
+</nav>
+
+        <section id="wrapper">
+            <article class="post">
+                <header>
+                    <h1>CADisplayLink and Maps</h1>
+                    <h2 class="headline">February 25, 2016</h2>
+                </header>
+                <section id="post-body">
+                    
+
+<p>Ever been in the position where you need to animate something on screen but the property is not covered by [UIView animateWith&hellip;]? Or maybe the thing you&rsquo;re trying to animate is not part of the standard UIKit frameworks, and is instead some higher level UI piece built by a vendor. I ran into this not too long ago with Google Maps iOS SDK. My desire was to animate a polyline across the sceen, but there was no built in animate feature for the SDK. This is how I learned about making your own animations with CADisplayLink. A bit of background first though&hellip;</p>
+
+<h1 id="fun-with-google-maps:48e3a9cef42133d4e3a0accdf42773f4">Fun With Google Maps</h1>
+
+<p>In the GoogleMaps iOS SDK, you create a polyline by creating a <code>GMSPath</code> object with your desired coordinates, providing that to a <code>GMSPolyline</code> and feeding the polyline some info such as width, color, etc., then pass that off to the <code>GMSMapView</code> you&rsquo;re using to display the map. Once you provide the path object to your mapview, the polyline is drawn on screen.</p>
+
+<p>Right off the bat, my though was that this polyline was simply another view, or most likely something backed by a <code>CAShapeLayer</code>, but the path object and the map didn&rsquo;t provide a reference to any underlying cocoa views or layers. I tried &lsquo;fishing&rsquo; for a reference to the view via <code>recursiveDescription</code> and digging through subviews, but quickly realized that the polyline I was seeing was not a separate view, but something rendered directly onto a OpenGL view. GoogleMaps, Apple Maps, and most recently MapBox all provide thier map views as <code>GLViews</code>. This pretty much killed the idea of finding a <code>UIView</code> or <code>CALayer</code> reference and animating it.</p>
+
+<h1 id="gmspath:48e3a9cef42133d4e3a0accdf42773f4">GMSPath</h1>
+
+<p>Once I gave up trying to animate the view&rsquo;s appearance directly, I took a look back at the underling datasource and wondered what would happen if I changed the <code>GMSPath</code> after I passed it to the mapview.</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">[self.mapView</span> <span style="color: #f8f8f2">setCamera:[GMSCameraPosition</span> <span style="color: #f8f8f2">cameraWithLatitude:</span><span style="color: #ae81ff">47.6094426</span> <span style="color: #f8f8f2">longitude:</span><span style="color: #f92672">-</span><span style="color: #ae81ff">122.3319217</span> <span style="color: #f8f8f2">zoom:</span><span style="color: #ae81ff">12.0</span><span style="color: #f8f8f2">]];</span>
+
+<span style="color: #f8f8f2">GMSMutablePath</span> <span style="color: #f92672">*</span><span style="color: #f8f8f2">mutablePath</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">[[GMSMutablePath</span> <span style="color: #f8f8f2">alloc]</span> <span style="color: #f8f8f2">init];</span>
+<span style="color: #f8f8f2">[mutablePath</span> <span style="color: #f8f8f2">addLatitude:</span><span style="color: #ae81ff">47.626452</span> <span style="color: #f8f8f2">longitude:</span><span style="color: #f92672">-</span><span style="color: #ae81ff">122.32</span><span style="color: #f8f8f2">];</span>
+<span style="color: #f8f8f2">[mutablePath</span> <span style="color: #f8f8f2">addLatitude:</span><span style="color: #ae81ff">47.626452</span> <span style="color: #f8f8f2">longitude:</span><span style="color: #f92672">-</span><span style="color: #ae81ff">122.29</span><span style="color: #f8f8f2">];</span>
+<span style="color: #f8f8f2">[mutablePath</span> <span style="color: #f8f8f2">addLatitude:</span><span style="color: #ae81ff">47.6</span> <span style="color: #f8f8f2">longitude:</span><span style="color: #f92672">-</span><span style="color: #ae81ff">122.29</span><span style="color: #f8f8f2">];</span>
+
+<span style="color: #f8f8f2">GMSPolyline</span> <span style="color: #f92672">*</span><span style="color: #f8f8f2">polyline</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">[[GMSPolyline</span> <span style="color: #f8f8f2">alloc]</span> <span style="color: #f8f8f2">init];</span>
+<span style="color: #f8f8f2">[polyline</span> <span style="color: #f8f8f2">setPath:mutablePath];</span>
+<span style="color: #f8f8f2">[polyline</span> <span style="color: #f8f8f2">setStrokeWidth:</span><span style="color: #ae81ff">7.0</span><span style="color: #f8f8f2">];</span>
+<span style="color: #f8f8f2">[polyline</span> <span style="color: #f8f8f2">setStrokeColor:[UIColor</span> <span style="color: #f8f8f2">redColor]];</span>
+<span style="color: #f8f8f2">[polyline</span> <span style="color: #f8f8f2">setMap:self.mapView];</span>
+
+<span style="color: #f8f8f2">dispatch_after(dispatch_time(DISPATCH_TIME_NOW,</span> <span style="color: #f8f8f2">(</span><span style="color: #66d9ef">int64_t</span><span style="color: #f8f8f2">)(</span><span style="color: #ae81ff">1.0</span> <span style="color: #f92672">*</span> <span style="color: #f8f8f2">NSEC_PER_SEC)),</span> <span style="color: #f8f8f2">dispatch_get_main_queue(),</span> <span style="color: #f92672">^</span><span style="color: #f8f8f2">{</span>
+    <span style="color: #f8f8f2">[mutablePath</span> <span style="color: #f8f8f2">addLatitude:</span><span style="color: #ae81ff">47.6</span> <span style="color: #f8f8f2">longitude:</span><span style="color: #f92672">-</span><span style="color: #ae81ff">122.32</span><span style="color: #f8f8f2">];</span>
+    <span style="color: #f8f8f2">[mutablePath</span> <span style="color: #f8f8f2">addLatitude:</span><span style="color: #ae81ff">47.626452</span> <span style="color: #f8f8f2">longitude:</span><span style="color: #f92672">-</span><span style="color: #ae81ff">122.32</span><span style="color: #f8f8f2">];</span>
+    <span style="color: #f8f8f2">[polyline</span> <span style="color: #f8f8f2">setPath:mutablePath];</span>
+<span style="color: #f8f8f2">});</span>
+</pre></div>
+
+
+
+<figure class="map-img">
+    
+        <img src="/media/polyline_complete.gif" />
+    
+    
+</figure>
+
+
+<p>Boom!</p>
+
+<h1 id="nstimer:48e3a9cef42133d4e3a0accdf42773f4">NSTimer?</h1>
+
+<p>What I needed was a way to interpolate though my coordinates, and have the callback progressively update the polyline. My first thought was <code>NSTimer</code> would be a good candidate, but I was wrong. NSTimer simply wasn&rsquo;t performing its callbacks fast enough, no matter how small I made the intervals. Looking into the documentation reveals why:</p>
+
+<blockquote>
+<p>A timer is not a real-time mechanism; it fires only when one of the run loop modes to which the timer has been added is running and able to check if the timer’s firing time has passed. Because of the various input sources a typical run loop manages, the effective resolution of the time interval for a timer is limited to on the order of 50-100 milliseconds.</p>
+</blockquote>
+
+<p>What I&rsquo;m looking to do is smoothly animate something, so a mechanism that only fires 10-20 times a second is clearly not my solution. What I need is something that will refresh at least as fast as the window redraws.</p>
+
+<h1 id="cadisplaylink:48e3a9cef42133d4e3a0accdf42773f4">CADisplayLink</h1>
+
+<p>What is CADisplayLink? It&rsquo;s a callback mechanism that hooks right into the screen&rsquo;s refresh callbacks. From the docs:</p>
+
+<blockquote>
+<p>A CADisplayLink object is a timer object that allows your application to synchronize its drawing to the refresh rate of the display. Your application creates a new display link, providing a target object and a selector to be called when the screen is updated</p>
+</blockquote>
+
+<p>Sounds like just what we need. The API for <code>CADisplayLink</code> is pretty similar to NSTimer. You alloc/init an instance, assign is to a runloop, give it a target and selector, and you have a callback that occurs whenever a redraw is about to happen on the screen.</p>
+
+<p>Here&rsquo;s the code:</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">-</span> <span style="color: #f8f8f2">(</span><span style="color: #66d9ef">void</span><span style="color: #f8f8f2">)</span><span style="color: #a6e22e">setupTimer</span>
+<span style="color: #f8f8f2">{</span>
+    <span style="color: #f8f8f2">self.displayLink</span>               <span style="color: #f92672">=</span> <span style="color: #f8f8f2">[CADisplayLink</span> <span style="color: #f8f8f2">displayLinkWithTarget:self</span> <span style="color: #f8f8f2">selector:</span><span style="color: #66d9ef">@selector</span><span style="color: #f8f8f2">(updateRoutePolyline)];</span>
+    <span style="color: #f8f8f2">[self.displayLink</span> <span style="color: #f8f8f2">addToRunLoop:[NSRunLoop</span> <span style="color: #f8f8f2">mainRunLoop]</span> <span style="color: #f8f8f2">forMode:NSRunLoopCommonModes];</span>
+    <span style="color: #f8f8f2">self.displayLink.frameInterval</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">2.0</span><span style="color: #f8f8f2">;</span>
+    <span style="color: #f8f8f2">self.animationBeginTime</span>        <span style="color: #f92672">=</span> <span style="color: #ae81ff">0</span><span style="color: #f8f8f2">;</span>
+    <span style="color: #f8f8f2">self.animationCurrentFrameTime</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">0</span><span style="color: #f8f8f2">;</span>
+<span style="color: #f8f8f2">}</span>
+
+<span style="color: #f8f8f2">-</span> <span style="color: #f8f8f2">(</span><span style="color: #66d9ef">void</span><span style="color: #f8f8f2">)</span><span style="color: #a6e22e">updateRoutePolyline</span>
+<span style="color: #f8f8f2">{</span>
+    <span style="color: #75715e">// Setting up our base times for the relative time tracking</span>
+    <span style="color: #66d9ef">double</span> <span style="color: #f8f8f2">duration</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">0</span><span style="color: #f8f8f2">;</span>
+    <span style="color: #66d9ef">if</span> <span style="color: #f8f8f2">(self.animationCurrentFrameTime</span> <span style="color: #f92672">==</span> <span style="color: #ae81ff">0</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
+        <span style="color: #f8f8f2">self.animationBeginTime</span>        <span style="color: #f92672">=</span> <span style="color: #f8f8f2">[self.displayLink</span> <span style="color: #f8f8f2">timestamp];</span>
+        <span style="color: #f8f8f2">self.animationCurrentFrameTime</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">[self.displayLink</span> <span style="color: #f8f8f2">timestamp];</span>
+    <span style="color: #f8f8f2">}</span> <span style="color: #66d9ef">else</span> <span style="color: #f8f8f2">{</span>
+        <span style="color: #66d9ef">double</span> <span style="color: #f8f8f2">nowTime</span>                 <span style="color: #f92672">=</span> <span style="color: #f8f8f2">[self.displayLink</span> <span style="color: #f8f8f2">timestamp];</span>
+        <span style="color: #f8f8f2">self.animationCurrentFrameTime</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">nowTime;</span>
+        <span style="color: #f8f8f2">duration</span>                       <span style="color: #f92672">=</span> <span style="color: #f8f8f2">nowTime</span> <span style="color: #f92672">-</span> <span style="color: #f8f8f2">self.animationBeginTime;</span>
+    <span style="color: #f8f8f2">}</span>
+    <span style="color: #f8f8f2">.</span>
+    <span style="color: #f8f8f2">.</span>
+    <span style="color: #f8f8f2">.</span>
+</pre></div>
+
+
+<p>And the result? A smooth animation across the screen for my polylines:</p>
+
+
+<figure class="map-img">
+    
+        <img src="/media/cadisplay_polyline.gif" />
+    
+    
+</figure>
+
+
+<h1 id="pop-and-other-animation-frameworks:48e3a9cef42133d4e3a0accdf42773f4">POP and Other Animation Frameworks</h1>
+
+<p>CADisplayLink is actually the key to any animation framework. An animation on the screen is simply displaying the interpolation of values over the screen. The only thing that makes POP and other animations a bit more complicated is the concept of timing curves - the rate of the change in animateable values over the change in time. With the <code>[UIView animate...]</code> functions, you may recognize them as the <code>UIViewAnimationCurve</code> enum. They define whether the animation will proceed in a linear fashion, or if it will speed up and/or slow down at certain points in the process.</p>
+
+<p>For instance though, if you look at POP&rsquo;s root animator class, you will find it <a href="https://github.com/facebook/pop/blob/master/pop/POPAnimator.mm#L347">hooking up a CADiaplyLink in the init</a>, and it&rsquo;s callback is the <a href="https://github.com/facebook/pop/blob/master/pop/POPAnimator.mm#L425">core render method in the animation</a>.</p>
+
+<h1 id="a-note-on-interpolation:48e3a9cef42133d4e3a0accdf42773f4">A Note On Interpolation</h1>
+
+<p>In the previous section on animating a polyline, I oversimplified the process a bit. While you can simply interpolate between lat/lng pairs relative to the total distance in polyline, you need to be sure you&rsquo;re hitting all of the original points provided to the polyline. This means that whenever you receive a callback to come up with a new point to put on screen, you need to check to make sure that all of the original control points (ends/beginnings of the lines) were laid out where they needed to be. In order to do that, we need to preprocess the line to figure out each control pairs&rsquo; position in our longer collection of interpolated points. Here is the code to preprocess the interpolation:</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #75715e">// *** Create the polyline route ***</span>
+<span style="color: #66d9ef">unsigned</span> <span style="color: #66d9ef">int</span> <span style="color: #f8f8f2">polylineCount</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">(</span><span style="color: #66d9ef">int</span><span style="color: #f8f8f2">)self.locations.count;</span>
+<span style="color: #66d9ef">if</span> <span style="color: #f8f8f2">(polylineCount</span> <span style="color: #f92672">==</span> <span style="color: #ae81ff">0</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #66d9ef">return</span><span style="color: #f8f8f2">;</span>
+<span style="color: #f8f8f2">}</span>
+
+<span style="color: #75715e">// Get total distance and record segments</span>
+<span style="color: #f8f8f2">CLLocationDistance</span> <span style="color: #f8f8f2">totalDistance</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">0.0</span><span style="color: #f8f8f2">;</span>
+<span style="color: #f8f8f2">NSMutableArray</span> <span style="color: #f92672">*</span><span style="color: #f8f8f2">routeLegDistances</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">[[NSMutableArray</span> <span style="color: #f8f8f2">alloc]</span> <span style="color: #f8f8f2">init];</span>
+
+<span style="color: #75715e">// Calculate the total distance in order to get prorata distance legs</span>
+<span style="color: #66d9ef">double</span> <span style="color: #f92672">*</span><span style="color: #f8f8f2">distances</span>               <span style="color: #f92672">=</span> <span style="color: #f8f8f2">malloc(</span><span style="color: #66d9ef">sizeof</span><span style="color: #f8f8f2">(CLLocationDistance)</span> <span style="color: #f92672">*</span> <span style="color: #f8f8f2">polylineCount);</span>
+
+<span style="color: #75715e">// We use these to track the waypoint progress and indexes</span>
+<span style="color: #66d9ef">int</span> <span style="color: #f8f8f2">allocCount</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">polylineCount</span> <span style="color: #f92672">*</span> <span style="color: #ae81ff">2.0</span><span style="color: #f8f8f2">;</span>
+<span style="color: #f8f8f2">self.wayPointIndexTracker</span>       <span style="color: #f92672">=</span> <span style="color: #f8f8f2">malloc(</span><span style="color: #66d9ef">sizeof</span><span style="color: #f8f8f2">(</span><span style="color: #66d9ef">int</span><span style="color: #f8f8f2">)</span> <span style="color: #f92672">*</span> <span style="color: #f8f8f2">allocCount);</span>
+<span style="color: #66d9ef">for</span> <span style="color: #f8f8f2">(</span><span style="color: #66d9ef">int</span> <span style="color: #f8f8f2">i</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">0</span><span style="color: #f8f8f2">;</span> <span style="color: #f8f8f2">i</span> <span style="color: #f92672">&lt;</span> <span style="color: #f8f8f2">allocCount;</span> <span style="color: #f8f8f2">i</span><span style="color: #f92672">++</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #f8f8f2">self.wayPointIndexTracker[i]</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">INT16_MAX;</span>
+<span style="color: #f8f8f2">}</span>
+
+<span style="color: #f8f8f2">self.wayPointIndexTrackerBegRef</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">self.wayPointIndexTracker;</span>
+<span style="color: #f8f8f2">self.waypointMappingCount</span>       <span style="color: #f92672">=</span> <span style="color: #ae81ff">0</span><span style="color: #f8f8f2">;</span>
+
+<span style="color: #75715e">// Getting the distances between waypoints so that we can</span>
+<span style="color: #75715e">// get relative length spans for each ray</span>
+<span style="color: #f8f8f2">CLLocation</span> <span style="color: #f92672">*</span><span style="color: #f8f8f2">previousLoc;</span>
+<span style="color: #66d9ef">for</span> <span style="color: #f8f8f2">(</span><span style="color: #66d9ef">int</span> <span style="color: #f8f8f2">i</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">0</span><span style="color: #f8f8f2">;</span> <span style="color: #f8f8f2">i</span> <span style="color: #f92672">&lt;</span> <span style="color: #f8f8f2">polylineCount;</span> <span style="color: #f8f8f2">i</span><span style="color: #f92672">++</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #f8f8f2">CLLocation</span> <span style="color: #f92672">*</span><span style="color: #f8f8f2">location</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">self.locations[i];</span>
+    <span style="color: #66d9ef">if</span> <span style="color: #f8f8f2">(i</span> <span style="color: #f92672">==</span> <span style="color: #ae81ff">0</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
+        <span style="color: #f8f8f2">previousLoc</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">location;</span>
+        <span style="color: #f8f8f2">distances[i]</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">0.0</span><span style="color: #f8f8f2">;</span>
+        <span style="color: #f8f8f2">[routeLegDistances</span> <span style="color: #f8f8f2">addObject:[NSNumber</span> <span style="color: #f8f8f2">numberWithInt:</span><span style="color: #ae81ff">0</span><span style="color: #f8f8f2">]];</span>
+    <span style="color: #f8f8f2">}</span> <span style="color: #66d9ef">else</span> <span style="color: #f8f8f2">{</span>
+        <span style="color: #f8f8f2">distances[i]</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">[previousLoc</span> <span style="color: #f8f8f2">distanceFromLocation:location];</span>
+        <span style="color: #f8f8f2">totalDistance</span> <span style="color: #f92672">+=</span> <span style="color: #f8f8f2">distances[i];</span>
+    <span style="color: #f8f8f2">}</span>
+    <span style="color: #f8f8f2">previousLoc</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">location;</span>
+<span style="color: #f8f8f2">}</span>
+
+<span style="color: #75715e">// Create fake intermediate points</span>
+<span style="color: #66d9ef">int</span> <span style="color: #f8f8f2">totalDesiredPoints</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">5000</span><span style="color: #f8f8f2">;</span>
+
+<span style="color: #75715e">// Adding a 100 mark buffer. Shouldn&#39;t ever go over the limit anyways, but doesn&#39;t take much room.</span>
+<span style="color: #66d9ef">int</span> <span style="color: #f92672">*</span><span style="color: #f8f8f2">waypointRunner</span>                          <span style="color: #f92672">=</span> <span style="color: #f8f8f2">self.wayPointIndexTracker;</span>
+<span style="color: #f8f8f2">CLLocationCoordinate2D</span> <span style="color: #f92672">*</span><span style="color: #f8f8f2">finalCoordinateArray</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">malloc(</span><span style="color: #66d9ef">sizeof</span><span style="color: #f8f8f2">(CLLocationCoordinate2D)</span> <span style="color: #f92672">*</span> <span style="color: #f8f8f2">(totalDesiredPoints</span> <span style="color: #f92672">+</span> <span style="color: #ae81ff">500</span><span style="color: #f8f8f2">));</span>
+<span style="color: #f8f8f2">CLLocationCoordinate2D</span> <span style="color: #f92672">*</span><span style="color: #f8f8f2">coordinateRunner</span>     <span style="color: #f92672">=</span> <span style="color: #f8f8f2">finalCoordinateArray;</span>
+<span style="color: #f8f8f2">CLLocationCoordinate2D</span> <span style="color: #f8f8f2">previousCoordinate;</span>
+<span style="color: #66d9ef">unsigned</span> <span style="color: #66d9ef">int</span> <span style="color: #f8f8f2">coordinateCount</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">0</span><span style="color: #f8f8f2">;</span>
+<span style="color: #66d9ef">for</span> <span style="color: #f8f8f2">(</span><span style="color: #66d9ef">int</span> <span style="color: #f8f8f2">x</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">0</span><span style="color: #f8f8f2">;</span> <span style="color: #f8f8f2">x</span> <span style="color: #f92672">&lt;</span> <span style="color: #f8f8f2">polylineCount;</span> <span style="color: #f8f8f2">x</span><span style="color: #f92672">++</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #75715e">// Add the first coord</span>
+    <span style="color: #f8f8f2">CLLocation</span> <span style="color: #f92672">*</span><span style="color: #f8f8f2">loc</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">self.locations[x];</span>
+    <span style="color: #f8f8f2">CLLocationCoordinate2D</span> <span style="color: #f8f8f2">currentCoord</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">loc.coordinate;</span>
+    <span style="color: #66d9ef">if</span> <span style="color: #f8f8f2">(x</span> <span style="color: #f92672">&gt;</span> <span style="color: #ae81ff">0</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
+        
+        <span style="color: #75715e">// We figure out the relative distance here between the current and the</span>
+        <span style="color: #75715e">// previous. Then use that to approximate how many interpolated points</span>
+        <span style="color: #75715e">// we need.</span>
+        <span style="color: #66d9ef">double</span> <span style="color: #f8f8f2">legDistance</span>                  <span style="color: #f92672">=</span> <span style="color: #f8f8f2">distances[x];</span>
+        <span style="color: #66d9ef">double</span> <span style="color: #f8f8f2">relativeDistance</span>             <span style="color: #f92672">=</span> <span style="color: #f8f8f2">legDistance</span> <span style="color: #f92672">/</span> <span style="color: #f8f8f2">totalDistance;</span>
+        <span style="color: #66d9ef">int</span> <span style="color: #f8f8f2">coordinateInsertCount</span>           <span style="color: #f92672">=</span> <span style="color: #f8f8f2">relativeDistance</span> <span style="color: #f92672">*</span> <span style="color: #f8f8f2">totalDesiredPoints;</span>
+        <span style="color: #66d9ef">for</span> <span style="color: #f8f8f2">(</span><span style="color: #66d9ef">int</span> <span style="color: #f8f8f2">i</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">0</span><span style="color: #f8f8f2">;</span> <span style="color: #f8f8f2">i</span> <span style="color: #f92672">&lt;</span> <span style="color: #f8f8f2">coordinateInsertCount;</span> <span style="color: #f8f8f2">i</span><span style="color: #f92672">++</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
+            <span style="color: #75715e">// Calculate the incremental coordinate diff and add to the current coord</span>
+            <span style="color: #66d9ef">double</span> <span style="color: #f8f8f2">newCoordinateVariance</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">(</span><span style="color: #66d9ef">float</span><span style="color: #f8f8f2">)i</span> <span style="color: #f92672">/</span> <span style="color: #f8f8f2">coordinateInsertCount;</span>
+            <span style="color: #66d9ef">double</span> <span style="color: #f8f8f2">addedLatVariance</span>      <span style="color: #f92672">=</span> <span style="color: #f8f8f2">(currentCoord.latitude</span> <span style="color: #f92672">-</span> <span style="color: #f8f8f2">previousCoordinate.latitude)</span> <span style="color: #f92672">*</span> <span style="color: #f8f8f2">newCoordinateVariance;</span>
+            <span style="color: #66d9ef">double</span> <span style="color: #f8f8f2">addedLngVariance</span>      <span style="color: #f92672">=</span> <span style="color: #f8f8f2">(currentCoord.longitude</span> <span style="color: #f92672">-</span> <span style="color: #f8f8f2">previousCoordinate.longitude)</span> <span style="color: #f92672">*</span> <span style="color: #f8f8f2">newCoordinateVariance;</span>
+            <span style="color: #66d9ef">double</span> <span style="color: #f8f8f2">newLat</span>                <span style="color: #f92672">=</span> <span style="color: #f8f8f2">previousCoordinate.latitude</span> <span style="color: #f92672">+</span> <span style="color: #f8f8f2">addedLatVariance;</span>
+            <span style="color: #66d9ef">double</span> <span style="color: #f8f8f2">newLng</span>                <span style="color: #f92672">=</span> <span style="color: #f8f8f2">previousCoordinate.longitude</span> <span style="color: #f92672">+</span> <span style="color: #f8f8f2">addedLngVariance;</span>
+            <span style="color: #f92672">*</span><span style="color: #f8f8f2">coordinateRunner</span>            <span style="color: #f92672">=</span> <span style="color: #f8f8f2">CLLocationCoordinate2DMake(newLat,</span> <span style="color: #f8f8f2">newLng);</span>
+
+            <span style="color: #75715e">// If i == 0, we have a waypoint that we must hit</span>
+            <span style="color: #66d9ef">if</span> <span style="color: #f8f8f2">(i</span> <span style="color: #f92672">==</span> <span style="color: #ae81ff">0</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
+                <span style="color: #f92672">*</span><span style="color: #f8f8f2">waypointRunner</span><span style="color: #f92672">++</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">coordinateCount;</span>
+            <span style="color: #f8f8f2">}</span>
+            
+            <span style="color: #f8f8f2">coordinateRunner</span><span style="color: #f92672">++</span><span style="color: #f8f8f2">;</span>
+            <span style="color: #f8f8f2">coordinateCount</span><span style="color: #f92672">++</span><span style="color: #f8f8f2">;</span>
+        <span style="color: #f8f8f2">}</span>
+    <span style="color: #f8f8f2">}</span>
+    <span style="color: #f8f8f2">previousCoordinate</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">currentCoord;</span>
+<span style="color: #f8f8f2">}</span>
+
+<span style="color: #f8f8f2">self.animationCoordinates</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">finalCoordinateArray;</span>
+<span style="color: #f8f8f2">self.animationCoordinateCount</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">coordinateCount;</span>
+
+<span style="color: #75715e">// Don&#39;t need these anymore</span>
+<span style="color: #f8f8f2">free(distances);</span>
+
+<span style="color: #66d9ef">if</span> <span style="color: #f8f8f2">(self.animationCoordinateCount</span> <span style="color: #f92672">&gt;</span> <span style="color: #ae81ff">0</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
+    <span style="color: #f8f8f2">[self</span> <span style="color: #f8f8f2">drawRoutPolyline];</span>
+<span style="color: #f8f8f2">}</span>
+</pre></div>
+
+
+                </section>
+            </article>
+            <footer id="post-meta" class="clearfix">
+                <a href="https://twitter.com/@tayhalliday">
+                        <img class="avatar" src="http://tayhalla.github.ioimages/avatar.png">
+                        <div>
+                            <span class="dark">Taylor Halliday</span>
+                            <span></span>
+                        </div>
+                    </a>
+                <section id="sharing">
+                    <a class="twitter" href="https://twitter.com/intent/tweet?text=http%3a%2f%2ftayhalla.github.io%2fpost%2fcaDisplayLink%2f - CADisplayLink%20and%20Maps by @%40tayhalliday"><span class="icon-twitter"> Tweet</span></a>
+
+<a class="facebook" href="#" onclick="
+    window.open(
+      'https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(location.href),
+      'facebook-share-dialog',
+      'width=626,height=436');
+    return false;"><span class="icon-facebook-rect"> Share</span>
+</a>
+
+                </section>
+            </footer>
+
+            
+                <section class="disqus">
+    
+</section>
+            
+
+            <ul id="post-list" class="archive readmore">
+    <h3>Read more</h3>
+    
+    
+        
+        <li>
+            <a href="http://tayhalla.github.io/post/envsInXCode/">Managing ENVs In XCode With Schemes<aside class="dates">Mar 6</aside></a>
+        </li>
+        
+   
+    
+        
+   
+    
+        
+        <li>
+            <a href="http://tayhalla.github.io/post/interfacesInGo/">Interfaces in Go<aside class="dates">Jan 25</aside></a>
+        </li>
+        
+   
+</ul>
+            <footer id="footer">
+    <p class="small">
+        © Copyright 2016 Taylor Halliday
+    </p>
+</footer>
+        </section>
+
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script src="http://tayhalla.github.iojs/main.js"></script>
+<script src="http://tayhalla.github.iojs/highlight.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+
+    </body>
+</html>
